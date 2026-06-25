@@ -121,7 +121,7 @@ const CitySection = () => {
   };
 
   return (
-    <section className="bg-gradient-to-b from-gray-50/30 to-white py-24">
+    <section id="cities" className="bg-gradient-to-b from-gray-50/30 to-white py-24">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-extrabold text-[#0A2B3E] tracking-tight mb-4">

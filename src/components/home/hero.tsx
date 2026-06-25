@@ -13,6 +13,7 @@ import {
 import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Category {
   _id: string;
@@ -110,13 +111,14 @@ const Hero = () => {
               >
                 Find Trusted Care
               </Button>
-              <Button
-                onClick={() => router.push("/find-job/1?role=find job")}
-                variant="outline"
-                className="h-12 rounded-full border-2 border-primary px-8 text-base font-semibold text-primary transition-all hover:bg-primary/10 sm:flex-1"
-              >
-                Become a Partner
-              </Button>
+              <Link href={`/signup`}>
+                <Button
+                  variant="outline"
+                  className="h-12 rounded-full border-2 border-primary px-8 text-base font-semibold text-primary transition-all hover:bg-primary/10 sm:flex-1"
+                >
+                  Become a Partner
+                </Button>
+              </Link>
             </div>
 
             <div className="mt-4 grid w-full grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">

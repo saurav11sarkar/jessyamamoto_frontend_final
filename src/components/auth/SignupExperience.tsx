@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import {
@@ -82,6 +82,7 @@ const EMPTY_PARENT_FORM = {
   country: "",
   city: "",
   gender: "",
+  bio: "",
 };
 
 const EMPTY_CAREGIVER_FORM = {
@@ -92,6 +93,7 @@ const EMPTY_CAREGIVER_FORM = {
   gender: "",
   country: "",
   city: "",
+  bio: "",
   hourRate: 20,
   ageVerified: false,
   termsAccepted: false,
@@ -134,9 +136,12 @@ const stepCard =
 
 export default function SignupExperience() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
 
   const existingRole = session?.user?.role as PublicRole | undefined;
+  const requestedRole = searchParams.get("role") as PublicRole | null;
+  const ambassadorCode = searchParams.get("ambassador") || "";
 
   const [rootStep, setRootStep] = useState<RootStep>(existingRole ? 2 : 1);
   const [selectedRole, setSelectedRole] = useState<PublicRole | "">(
@@ -153,6 +158,12 @@ export default function SignupExperience() {
   const [showPassword, setShowPassword] = useState(false);
   const [showCaregiverPassword, setShowCaregiverPassword] = useState(false);
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
+  const [parentProfileImage, setParentProfileImage] = useState<File | null>(null);
+  const [parentProfilePreview, setParentProfilePreview] = useState("");
+  const [caregiverProfileImage, setCaregiverProfileImage] = useState<File | null>(
+    null,
+  );
+  const [caregiverProfilePreview, setCaregiverProfilePreview] = useState("");
 
   const { data: categories = [], isLoading: isCategoryLoading } = useQuery({
     queryKey: ["public-categories"],
@@ -213,6 +224,15 @@ export default function SignupExperience() {
   const isParentLocked = existingRole === "find job";
   const isCaregiverLocked = existingRole === "find care";
 
+  useEffect(() => {
+    if (existingRole) return;
+    if (requestedRole === "find care" || requestedRole === "find job") {
+      setSelectedRole(requestedRole);
+      setRootStep(2);
+      setCaregiverStep(0);
+    }
+  }, [existingRole, requestedRole]);
+
   const handleRoleSelect = (role: PublicRole) => {
     if (role === "find care" && isParentLocked) return;
     if (role === "find job" && isCaregiverLocked) return;
@@ -236,14 +256,26 @@ export default function SignupExperience() {
     setCaregiverForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleParentProfileChange = (file: File | null) => {
+    setParentProfileImage(file);
+    setParentProfilePreview(file ? URL.createObjectURL(file) : "");
+  };
+
+  const handleCaregiverProfileChange = (file: File | null) => {
+    setCaregiverProfileImage(file);
+    setCaregiverProfilePreview(file ? URL.createObjectURL(file) : "");
+  };
+
   const handleParentSignup = async () => {
     if (
       !parentForm.firstName ||
       !parentForm.email ||
-          !parentForm.password ||
-          !parentForm.country ||
-          !parentForm.city ||
-          !parentForm.gender
+      !parentForm.password ||
+      !parentForm.country ||
+      !parentForm.city ||
+      !parentForm.gender ||
+      !parentForm.bio.trim() ||
+      !parentProfileImage
     ) {
       toast.error("Please complete all required Parent details.");
       return;
@@ -251,16 +283,28 @@ export default function SignupExperience() {
 
     setIsSubmittingParent(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const payload = new FormData();
+      payload.append("firstName", parentForm.firstName);
+      payload.append("lastName", parentForm.lastName);
+      payload.append("email", parentForm.email);
+      payload.append("password", parentForm.password);
+      payload.append("country", parentForm.country);
+      payload.append("city", parentForm.city);
+      payload.append("gender", parentForm.gender);
+      payload.append("bio", parentForm.bio);
+      payload.append("role", "find care");
+      payload.append("profileImage", parentProfileImage);
+      if (ambassadorCode) {
+        payload.append("referralCode", ambassadorCode);
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          method: "POST",
+          body: payload,
         },
-        body: JSON.stringify({
-          ...parentForm,
-          role: "find care",
-        }),
-      });
+      );
 
       const result = await response.json();
       if (!response.ok) {
@@ -268,6 +312,8 @@ export default function SignupExperience() {
       }
 
       toast.success("Parent account created successfully. Please log in.");
+      setParentProfileImage(null);
+      setParentProfilePreview("");
       router.push("/login");
     } catch (error) {
       toast.error(
@@ -311,6 +357,8 @@ export default function SignupExperience() {
         !caregiverForm.firstName ||
         !caregiverForm.lastName ||
         !caregiverForm.gender ||
+        !caregiverForm.bio.trim() ||
+        !caregiverProfileImage ||
         !caregiverForm.termsAccepted
       ) {
         toast.error("Please complete your personal details.");
@@ -387,26 +435,32 @@ export default function SignupExperience() {
         };
       });
 
+      const payload = new FormData();
+      payload.append("role", "find job");
+      payload.append("categoryId", selectedCategoryId);
+      payload.append("email", caregiverForm.email);
+      payload.append("password", caregiverForm.password);
+      payload.append("firstName", caregiverForm.firstName);
+      payload.append("lastName", caregiverForm.lastName);
+      payload.append("gender", caregiverForm.gender);
+      payload.append("country", caregiverForm.country);
+      payload.append("city", caregiverForm.city);
+      payload.append("bio", caregiverForm.bio);
+      payload.append("hourRate", String(caregiverForm.hourRate));
+      payload.append("days", JSON.stringify(days));
+      if (ambassadorCode) {
+        payload.append("referralCode", ambassadorCode);
+        payload.append("onboardingSource", "city_ambassador");
+      }
+      if (caregiverProfileImage) {
+        payload.append("profileImage", caregiverProfileImage);
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/service/register-service`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            role: "find job",
-            categoryId: selectedCategoryId,
-            email: caregiverForm.email,
-            password: caregiverForm.password,
-            firstName: caregiverForm.firstName,
-            lastName: caregiverForm.lastName,
-            gender: caregiverForm.gender,
-            country: caregiverForm.country,
-            city: caregiverForm.city,
-            hourRate: caregiverForm.hourRate,
-            days,
-          }),
+          body: payload,
         },
       );
 
@@ -415,6 +469,8 @@ export default function SignupExperience() {
         throw new Error(result.message || "Unable to create caregiver account");
       }
 
+      setCaregiverProfileImage(null);
+      setCaregiverProfilePreview("");
       setIsApprovalDialogOpen(true);
     } catch (error) {
       toast.error(
@@ -685,6 +741,44 @@ export default function SignupExperience() {
                     ))}
                   </SelectContent>
                 </Select>
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Profile photo
+                  </label>
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        handleParentProfileChange(e.target.files?.[0] || null)
+                      }
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-[#3ee0cf] file:px-4 file:py-2 file:font-semibold file:text-slate-950 hover:file:bg-[#2bcfbe]"
+                    />
+                    {parentProfilePreview && (
+                      <div className="mt-4 flex items-center gap-3 rounded-xl bg-white p-3">
+                        <Image
+                          src={parentProfilePreview}
+                          alt="Parent preview"
+                          width={56}
+                          height={56}
+                          unoptimized
+                          className="h-14 w-14 rounded-full object-cover"
+                        />
+                        <p className="text-sm text-slate-600">
+                          Profile picture selected
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <textarea
+                    value={parentForm.bio}
+                    onChange={(e) => updateParentField("bio", e.target.value)}
+                    className="min-h-[140px] w-full rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-[15px] text-slate-900 shadow-sm outline-none focus:border-[#3ee0cf] focus-visible:ring-2 focus-visible:ring-[#3ee0cf]"
+                    placeholder="Short bio about you"
+                  />
+                </div>
               </div>
             </div>
 
@@ -915,6 +1009,48 @@ export default function SignupExperience() {
                     ))}
                   </SelectContent>
                 </Select>
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Profile photo
+                  </label>
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        handleCaregiverProfileChange(
+                          e.target.files?.[0] || null,
+                        )
+                      }
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-[#3ee0cf] file:px-4 file:py-2 file:font-semibold file:text-slate-950 hover:file:bg-[#2bcfbe]"
+                    />
+                    {caregiverProfilePreview && (
+                      <div className="mt-4 flex items-center gap-3 rounded-xl bg-white p-3">
+                        <Image
+                          src={caregiverProfilePreview}
+                          alt="Partner preview"
+                          width={56}
+                          height={56}
+                          unoptimized
+                          className="h-14 w-14 rounded-full object-cover"
+                        />
+                        <p className="text-sm text-slate-600">
+                          Profile picture selected
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <textarea
+                    value={caregiverForm.bio}
+                    onChange={(e) =>
+                      updateCaregiverField("bio", e.target.value)
+                    }
+                    className="min-h-[140px] w-full rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-[15px] text-slate-900 shadow-sm outline-none focus:border-[#3ee0cf] focus-visible:ring-2 focus-visible:ring-[#3ee0cf]"
+                    placeholder="Short bio about your care experience"
+                  />
+                </div>
                 </div>
                 <label className="mx-auto mt-5 flex max-w-4xl items-start gap-3 text-sm text-slate-600">
                   <input

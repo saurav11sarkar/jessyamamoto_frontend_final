@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import {
   User,
   Settings,
@@ -29,9 +29,11 @@ import { Button } from "@/components/ui/button";
 
 const UserDashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const isPartner = session?.user?.role === "find job";
 
   const menuItems = [
     {
@@ -50,7 +52,7 @@ const UserDashboardLayout = ({ children }: { children: React.ReactNode }) => {
       label: "My Services",
       icon: Briefcase,
       href: "/profile/services",
-      show: true,
+      show: isPartner,
     },
     {
       label: "Payment History",

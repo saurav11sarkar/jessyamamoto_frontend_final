@@ -25,7 +25,7 @@ export default function AmbassadorJoinPage() {
             `${data.data.userId?.firstName || ""} ${data.data.userId?.lastName || ""}`.trim()
           );
           setTimeout(() => {
-            router.push(`/find-job/1?role=find job&ambassador=${code}`);
+            router.push(`/signup?role=find job&ambassador=${code}`);
           }, 2000);
         } else {
           setValid(false);
@@ -57,7 +57,7 @@ export default function AmbassadorJoinPage() {
           This referral link is not valid. You can still sign up directly.
         </p>
         <button
-          onClick={() => router.push("/find-job/1?role=find job")}
+          onClick={() => router.push("/signup")}
           className="mt-4 px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90"
         >
           Sign Up as Partner

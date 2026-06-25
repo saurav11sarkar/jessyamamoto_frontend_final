@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "../ui/button";
 import { Shield, Star, Heart, Clock } from "lucide-react";
+import Link from "next/link";
 
 const ProviderSection = () => {
   return (
@@ -52,9 +53,11 @@ const ProviderSection = () => {
         </div>
 
         <div className="hidden sm:block">
-          <Button className="rounded-full px-8 h-12 bg-[#40E0D0] hover:bg-[#2CB0A0] text-black">
-            Apply as a JetSet Care Partner
-          </Button>
+          <Link href={`/signup`}>
+            <Button className="rounded-full px-8 h-12 bg-[#40E0D0] hover:bg-[#2CB0A0] text-black">
+              Apply as a JetSet Care Partner
+            </Button>
+          </Link>
         </div>
 
         <div className="block sm:hidden">

@@ -197,6 +197,31 @@ const MyServices = () => {
     );
   }
 
+  if (userProfile.role !== "find job") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-50 mb-4">
+            <Briefcase className="w-10 h-10 text-amber-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            My Services is only for Partners
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Parent accounts can manage bookings here, but only Partner accounts
+            can add services to their profile.
+          </p>
+          <button
+            onClick={() => router.push("/profile/bookings")}
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            View My Bookings
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div>
@@ -213,7 +238,7 @@ const MyServices = () => {
                 </span>
               </h1>
               <p className="text-gray-500 mt-2">
-                Manage your active care and job services
+                Manage the services attached to your Partner profile
               </p>
             </div>
             <button
@@ -289,7 +314,7 @@ const MyServices = () => {
               No Services Added Yet
             </h3>
             <p className="text-gray-500 mb-6">
-              Start by adding care or job services to your profile
+              Start by adding categories directly to your Partner profile.
             </p>
             <button
               onClick={() => router.push("/category")}

@@ -74,8 +74,11 @@ const Navbar = () => {
     { label: "Find Trusted Care", href: "/#categories" },
     { label: "Cities", href: "/#cities" },
     { label: "Membership", href: "/membership" },
-    { label: "Become a Partner", href: "/find-job/1?role=find job" },
   ];
+
+  if (!session) {
+    navLinks.push({ label: "Become a Partner", href: "/signup" });
+  }
 
   return (
     <>
