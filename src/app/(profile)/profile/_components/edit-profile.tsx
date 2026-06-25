@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   CheckCircle2,
+  Crown,
   FileText,
   ImageIcon,
   Loader2,
@@ -103,6 +104,11 @@ const EditProfilePage = () => {
   const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
   const [selectedMainPhoto, setSelectedMainPhoto] = useState("");
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    isActive: boolean;
+    isExpired: boolean;
+    expiry: string;
+  }>({ isActive: false, isExpired: false, expiry: "" });
   const [existingCertificates, setExistingCertificates] = useState<string[]>(
     [],
   );
@@ -302,6 +308,26 @@ const EditProfilePage = () => {
           professionalSkill: data.professionalSkill || [],
           perferences: data.perferences || [],
           neighborhoods: data.neighborhoods || "",
+        });
+
+        const hasExpiry = !!data.subscriptionExpiry;
+        const expiryDate = hasExpiry
+          ? new Date(data.subscriptionExpiry)
+          : null;
+        const now = new Date();
+        setSubscriptionInfo({
+          isActive:
+            data.isSubscription === true &&
+            !!expiryDate &&
+            expiryDate > now,
+          isExpired: !!expiryDate && expiryDate <= now,
+          expiry: expiryDate
+            ? expiryDate.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : "",
         });
 
         setCountryValue(data.country || "");
@@ -562,6 +588,85 @@ const EditProfilePage = () => {
               <p className="text-gray-500">
                 Update your personal information and expertise.
               </p>
+            </div>
+          </div>
+
+          {/* Subscription Status Section */}
+          <div
+            className={`mb-6 rounded-xl border p-5 ${
+              subscriptionInfo.isActive
+                ? "bg-green-50 border-green-200"
+                : subscriptionInfo.isExpired
+                  ? "bg-amber-50 border-amber-200"
+                  : "bg-gray-50 border-gray-200"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    subscriptionInfo.isActive
+                      ? "bg-green-100"
+                      : subscriptionInfo.isExpired
+                        ? "bg-amber-100"
+                        : "bg-gray-200"
+                  }`}
+                >
+                  <Crown
+                    className={`w-6 h-6 ${
+                      subscriptionInfo.isActive
+                        ? "text-green-600"
+                        : subscriptionInfo.isExpired
+                          ? "text-amber-600"
+                          : "text-gray-400"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <h3
+                    className={`font-semibold text-base ${
+                      subscriptionInfo.isActive
+                        ? "text-green-800"
+                        : subscriptionInfo.isExpired
+                          ? "text-amber-800"
+                          : "text-gray-700"
+                    }`}
+                  >
+                    {subscriptionInfo.isActive
+                      ? "Membership Active"
+                      : subscriptionInfo.isExpired
+                        ? "Membership Expired"
+                        : "No Membership"}
+                  </h3>
+                  <p
+                    className={`text-sm mt-0.5 ${
+                      subscriptionInfo.isActive
+                        ? "text-green-600"
+                        : subscriptionInfo.isExpired
+                          ? "text-amber-600"
+                          : "text-gray-500"
+                    }`}
+                  >
+                    {subscriptionInfo.isActive
+                      ? `Expires on ${subscriptionInfo.expiry} — Booking fee: 12.5%`
+                      : subscriptionInfo.isExpired
+                        ? `Expired on ${subscriptionInfo.expiry} — Booking fee: 25%`
+                        : "Subscribe to get reduced 12.5% booking fee"}
+                  </p>
+                </div>
+              </div>
+              {!subscriptionInfo.isActive && (
+                <a
+                  href="/membership"
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors ${
+                    subscriptionInfo.isExpired
+                      ? "bg-amber-600 text-white hover:bg-amber-700"
+                      : "bg-primary text-white hover:bg-primary/90"
+                  }`}
+                >
+                  {subscriptionInfo.isExpired ? "Renew" : "Subscribe"}
+                </a>
+              )}
             </div>
           </div>
 

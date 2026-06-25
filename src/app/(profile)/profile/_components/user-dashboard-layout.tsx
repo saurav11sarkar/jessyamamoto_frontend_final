@@ -14,6 +14,7 @@ import {
   ChevronRight,
   MessageSquare,
   Calendar,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -49,6 +50,12 @@ const UserDashboardLayout = ({ children }: { children: React.ReactNode }) => {
       label: "My Services",
       icon: Briefcase,
       href: "/profile/services",
+      show: true,
+    },
+    {
+      label: "Payment History",
+      icon: CreditCard,
+      href: "/profile/payments",
       show: true,
     },
     {

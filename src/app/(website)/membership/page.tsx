@@ -4,7 +4,7 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Crown, CalendarDays, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface Subscription {
@@ -27,6 +27,13 @@ interface SubscriptionResponse {
     limit: number;
   };
   data: Subscription[];
+}
+
+interface UserProfile {
+  _id: string;
+  isSubscription?: boolean;
+  subscription?: string | { _id: string; type: string; title: string };
+  subscriptionExpiry?: string;
 }
 
 const typeOrder: Record<string, number> = {
@@ -53,6 +60,43 @@ export default function MembershipPage() {
   const token = session?.user?.accessToken || "";
   const [loadingPlanId, setLoadingPlanId] = React.useState<string | null>(null);
 
+  const { data: profileData } = useQuery<UserProfile>({
+    queryKey: ["userProfile"],
+    queryFn: async () => {
+      if (!token) throw new Error("Not authenticated");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/user/profile`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      const json = await res.json();
+      return json.data;
+    },
+    enabled: !!token,
+  });
+
+  const isActive =
+    profileData?.isSubscription === true &&
+    !!profileData?.subscriptionExpiry &&
+    new Date(profileData.subscriptionExpiry) > new Date();
+
+  const isExpired =
+    profileData?.subscriptionExpiry &&
+    new Date(profileData.subscriptionExpiry) <= new Date();
+
+  const activeSubscriptionId =
+    typeof profileData?.subscription === "object"
+      ? profileData.subscription._id
+      : profileData?.subscription;
+
+  const expiryDate = profileData?.subscriptionExpiry
+    ? new Date(profileData.subscriptionExpiry).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "";
+
   const { data, isLoading } = useQuery<SubscriptionResponse>({
     queryKey: ["subscriptions"],
     queryFn: async () => {
@@ -74,6 +118,11 @@ export default function MembershipPage() {
   const handleSubscribe = async (planId: string) => {
     if (!session) {
       router.push("/login");
+      return;
+    }
+
+    if (isActive) {
+      toast.error("You already have an active subscription.");
       return;
     }
 
@@ -155,6 +204,50 @@ export default function MembershipPage() {
         </div>
       </section>
 
+      {/* Active Subscription Banner */}
+      {session && isActive && (
+        <section className="pb-8 px-4">
+          <div className="container mx-auto max-w-3xl">
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-6 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <Crown className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-green-800 text-lg">
+                  Membership Active
+                </h3>
+                <p className="text-green-700 text-sm flex items-center gap-1.5 mt-0.5">
+                  <CalendarDays className="w-4 h-4" />
+                  Your membership is active until {expiryDate}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Expired Subscription Banner */}
+      {session && isExpired && !isActive && (
+        <section className="pb-8 px-4">
+          <div className="container mx-auto max-w-3xl">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-amber-800 text-lg">
+                  Membership Expired
+                </h3>
+                <p className="text-amber-700 text-sm">
+                  Your membership expired on {expiryDate}. Renew now to continue
+                  enjoying reduced booking fees.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Pricing Cards */}
       <section className="py-12 px-4 pb-24">
         <div className="container mx-auto max-w-5xl">
@@ -225,19 +318,32 @@ export default function MembershipPage() {
                       </ul>
                     </div>
 
-                    <button
-                      onClick={() => handleSubscribe(plan._id)}
-                      disabled={loadingPlanId === plan._id}
-                      className={`w-full py-3 px-6 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
-                        isPopular
-                          ? "bg-primary text-white hover:bg-primary/90"
-                          : "bg-slate-900 text-white hover:bg-slate-800"
-                      }`}
-                    >
-                      {loadingPlanId === plan._id
-                        ? "Processing..."
-                        : "Subscribe"}
-                    </button>
+                    {isActive && activeSubscriptionId === plan._id ? (
+                      <button
+                        disabled
+                        className="w-full py-3 px-6 rounded-xl font-semibold text-sm bg-green-100 text-green-700 cursor-not-allowed"
+                      >
+                        Current Plan
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleSubscribe(plan._id)}
+                        disabled={isActive || loadingPlanId === plan._id}
+                        className={`w-full py-3 px-6 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                          isPopular
+                            ? "bg-primary text-white hover:bg-primary/90"
+                            : "bg-slate-900 text-white hover:bg-slate-800"
+                        }`}
+                      >
+                        {loadingPlanId === plan._id
+                          ? "Processing..."
+                          : isActive
+                            ? "Active Plan"
+                            : isExpired
+                              ? "Renew"
+                              : "Subscribe"}
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -253,11 +359,24 @@ export default function MembershipPage() {
             <h3 className="text-xl font-semibold text-slate-800 mb-2">
               Your Subscription
             </h3>
-            <p className="text-slate-600">
-              If you already have an active subscription, your benefits are
-              automatically applied to all bookings. Manage your subscription
-              from your profile settings.
-            </p>
+            {isActive ? (
+              <p className="text-slate-600">
+                Your membership is <span className="font-semibold text-green-600">active</span> and
+                your reduced 12.5% booking fee is automatically applied to all
+                bookings. Expires on <span className="font-semibold">{expiryDate}</span>.
+              </p>
+            ) : isExpired ? (
+              <p className="text-slate-600">
+                Your membership <span className="font-semibold text-amber-600">expired</span> on{" "}
+                <span className="font-semibold">{expiryDate}</span>. Renew
+                above to continue enjoying reduced booking fees.
+              </p>
+            ) : (
+              <p className="text-slate-600">
+                You don&apos;t have an active subscription yet. Subscribe to a
+                plan above to enjoy reduced 12.5% booking fees instead of 25%.
+              </p>
+            )}
           </div>
         </section>
       )}
