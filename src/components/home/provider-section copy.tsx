@@ -5,7 +5,7 @@ import { Shield, Star, Heart, Clock } from "lucide-react";
 
 const ProviderSection = () => {
   return (
-    <section className="py-24 bg-white">
+    <section className="py-16 bg-white">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-[#0A2B3E] mb-4">
           Become a JetSet Care Partner

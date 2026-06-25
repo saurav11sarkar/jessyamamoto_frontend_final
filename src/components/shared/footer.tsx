@@ -1,11 +1,17 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Facebook, Instagram, Youtube, Mail } from "lucide-react";
+import {
+  Facebook,
+  Instagram,
+  Mail,
+  MapPin,
+  Phone,
+  Youtube,
+} from "lucide-react";
 
 const Footer = () => {
   const forFamilies = [
-    { name: "Find Care", href: "/#categories" },
+    { name: "Find Trusted Care", href: "/#categories" },
     { name: "Cities", href: "/#cities" },
     { name: "Membership", href: "/membership" },
     { name: "FAQ", href: "/faq" },
@@ -30,112 +36,173 @@ const Footer = () => {
   ];
 
   const socialIcons = [
-    { Icon: Facebook, href: "https://www.facebook.com/jetsetcares", label: "Facebook" },
-    { Icon: Instagram, href: "https://www.instagram.com/jetsetcare", label: "Instagram" },
-    { Icon: Youtube, href: "https://youtube.com/@jetsetcares", label: "YouTube" },
-    { Icon: Mail, href: "mailto:support@jetsetcares.org", label: "Email" },
+    {
+      Icon: Facebook,
+      href: "https://www.facebook.com/jetsetcares",
+      label: "Facebook",
+    },
+    {
+      Icon: Instagram,
+      href: "https://www.instagram.com/jetsetcare?igsh=MXh4ZjBlMGI4NzNpMg==",
+      label: "Instagram",
+    },
+    {
+      Icon: Youtube,
+      href: "https://youtube.com/@jetsetcares?si=69ookj5sCBgsAWRa",
+      label: "YouTube",
+    },
   ];
 
   return (
-    <footer className="bg-gradient-to-b from-[#0A2B3E] to-[#061D2B] pt-16 pb-8">
-      <div className="container px-4 sm:px-6">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="inline-flex items-center">
-              <Image
-                src="/jetset-logo.webp"
-                alt="JetSet Cares"
-                width={80}
-                height={80}
-                className="h-[80px] w-[80px] object-cover brightness-0 invert"
-              />
-            </Link>
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-gray-400">
-              Trusted care for families traveling, relocating, and living abroad.
-            </p>
-            <div className="mt-5 flex gap-3">
-              {socialIcons.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  target={item.href.startsWith("http") ? "_blank" : undefined}
-                  rel={item.href.startsWith("http") ? "noreferrer" : undefined}
-                  aria-label={item.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-gray-400 transition-all hover:bg-[#00D1C1] hover:text-white"
-                >
-                  <item.Icon size={16} />
-                </a>
-              ))}
+    <footer className="overflow-hidden bg-[#3ee0cf] pt-16 text-slate-900">
+      <div className="container">
+        <div className="mb-10 rounded-[32px] border border-white/40 bg-white/25 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-sm md:p-8">
+          <div className="grid gap-10 lg:grid-cols-5">
+            <div>
+              <h4 className="mb-5 text-lg font-bold text-slate-900">
+                For Families
+              </h4>
+              <ul className="space-y-3">
+                {forFamilies.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-slate-800 transition-colors hover:text-slate-950"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
 
-          <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#00D1C1]">
-              For Families
-            </h4>
-            <ul className="space-y-2.5">
-              {forFamilies.map((link) => (
-                <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-gray-400 transition-colors hover:text-white">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <div>
+              <h4 className="mb-5 text-lg font-bold text-slate-900">
+                For Partners
+              </h4>
+              <ul className="space-y-3">
+                {forPartners.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-slate-800 transition-colors hover:text-slate-950"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#00D1C1]">
-              For Partners
-            </h4>
-            <ul className="space-y-2.5">
-              {forPartners.map((link) => (
-                <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-gray-400 transition-colors hover:text-white">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <div>
+              <h4 className="mb-5 text-lg font-bold text-slate-900">Company</h4>
+              <ul className="space-y-3">
+                {company.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-slate-800 transition-colors hover:text-slate-950"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#00D1C1]">
-              Company
-            </h4>
-            <ul className="space-y-2.5">
-              {company.map((link) => (
-                <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-gray-400 transition-colors hover:text-white">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <div className="space-y-5">
+              <h4 className="text-lg font-bold text-slate-900">Legal</h4>
+              <ul className="space-y-3">
+                {legal.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-slate-800 transition-colors hover:text-slate-950"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
 
-          <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#00D1C1]">
-              Legal
-            </h4>
-            <ul className="space-y-2.5">
-              {legal.map((link) => (
-                <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-gray-400 transition-colors hover:text-white">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-6">
-              <p className="text-xs text-gray-500">support@jetsetcares.org</p>
-              <p className="mt-1 text-xs text-gray-500">+44 204 634 5573</p>
+              <div className="pt-1">
+                <p className="mb-3 text-sm font-semibold text-slate-900">
+                  Follow Us
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {socialIcons.map((item) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      target={
+                        item.href.startsWith("http") ? "_blank" : undefined
+                      }
+                      rel={
+                        item.href.startsWith("http") ? "noreferrer" : undefined
+                      }
+                      aria-label={item.label}
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-400/70 bg-white/45 text-slate-800 transition-all hover:-translate-y-0.5 hover:bg-white/70"
+                    >
+                      <item.Icon size={18} strokeWidth={1.8} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-2">
+              <div className="flex items-start gap-3 rounded-2xl bg-white/35 p-4">
+                <Mail className="mt-0.5 h-5 w-5 text-slate-900" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+                    Email
+                  </p>
+                  <a
+                    href="mailto:admin@jetsetcares.org"
+                    className="mt-1 block text-sm font-medium text-slate-900 transition-colors hover:text-slate-700"
+                  >
+                    admin@jetsetcares.org
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl bg-white/35 p-4">
+                <Phone className="mt-0.5 h-5 w-5 text-slate-900" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+                    Office Phone
+                  </p>
+                  <a
+                    href="tel:+442046345573"
+                    className="mt-1 block text-sm font-medium text-slate-900 transition-colors hover:text-slate-700"
+                  >
+                    +442046345573
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl bg-white/35 p-4">
+                <MapPin className="mt-0.5 h-5 w-5 text-slate-900" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+                    Social
+                  </p>
+                  <a
+                    href="https://www.facebook.com/jetsetcares"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 block text-sm font-medium text-slate-900 transition-colors hover:text-slate-700"
+                  >
+                    facebook.com/jetsetcares
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 border-t border-white/10 pt-6 text-center">
-          <p className="text-xs text-gray-500">
+        <div className="border-t border-slate-500/35 py-6 text-center">
+          <p className="text-sm text-slate-800">
             {new Date().getFullYear()} JetSet Cares. All rights reserved.
           </p>
         </div>

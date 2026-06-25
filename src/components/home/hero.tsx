@@ -85,7 +85,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-white pt-16 pb-10 mt-16 lg:mt-0">
+    <section className="relative overflow-hidden bg-white pt-16 pb-24 mt-16 lg:mt-0">
       <div className="container relative px-4 sm:px-6">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-12">
           {/* Left Side - Text Content */}
