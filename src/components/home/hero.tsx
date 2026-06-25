@@ -114,7 +114,7 @@ const Hero = () => {
               <Link href={`/signup`}>
                 <Button
                   variant="outline"
-                  className="h-12 rounded-full border-2 border-primary px-8 text-base font-semibold text-primary transition-all hover:bg-primary/10 sm:flex-1"
+                  className="h-12 rounded-full border-2 border-primary px-8 text-base font-semibold text-primary transition-all hover:bg-primary/10 sm:flex-1 w-full"
                 >
                   Become a Partner
                 </Button>
