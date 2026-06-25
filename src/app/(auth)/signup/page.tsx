@@ -1,5 +1,5 @@
 import SignupExperience from "@/components/auth/SignupExperience";
 
-export default function Register() {
+export default function SignupPage() {
   return <SignupExperience />;
 }

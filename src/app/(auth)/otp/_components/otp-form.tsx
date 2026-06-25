@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Loader from "@/components/loader/Loader";
+import Link from "next/link";
 
 const formSchema = z.object({
   otp: z.string().min(6, { message: "OTP must be 6 characters." }),
@@ -135,16 +136,15 @@ const OtpForm = () => {
   return (
     <div>
       {email && (
-        <div className="mb-4 text-center">
-          <p className="text-sm text-gray-600">
+        <div className="mb-6 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4 text-center">
+          <p className="text-sm text-slate-600">
             OTP sent to: <span className="font-medium">{email}</span>
           </p>
         </div>
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-          {/* OTP Field */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="otp"
@@ -160,19 +160,19 @@ const OtpForm = () => {
                       }
                     }}
                   >
-                    <InputOTPGroup className="gap-2 sm:gap-5">
+                    <InputOTPGroup className="gap-2 sm:gap-4">
                       {[...Array(6)].map((_, index) => (
                         <InputOTPSlot
                           key={index}
                           index={index}
-                          className="h-12 w-12 sm:h-16 sm:w-16 rounded-md border border-black text-lg"
+                          className="h-12 w-12 rounded-xl border-slate-200 bg-slate-50 text-lg shadow-sm sm:h-14 sm:w-14"
                         />
                       ))}
                     </InputOTPGroup>
                   </InputOTP>
                 </FormControl>
                 <FormMessage />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="mt-3 text-xs text-slate-500">
                   Enter the 6-digit OTP sent to your email
                 </p>
               </FormItem>
@@ -183,18 +183,27 @@ const OtpForm = () => {
         </form>
       </Form>
 
-      <div className="mt-5 space-y-3">
-        <div className="text-center flex items-center justify-center gap-2">
-          <p className="text-sm text-gray-600">Didn&apos;t receive OTP?</p>
+      <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 text-center">
+          <p className="text-sm text-slate-600">Didn&apos;t receive OTP?</p>
           <button
             type="button"
             onClick={handleResendOTP}
-            className="font-semibold hover:underline text-black disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-semibold text-[#1b9f92] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!email}
           >
             {loading ? "Resend OTP..." : "Resend OTP"}
           </button>
         </div>
+        <p className="mt-3 text-center text-sm text-slate-600">
+          Need to change your email?{" "}
+          <Link
+            href="/forgot-password"
+            className="font-semibold text-[#1b9f92] hover:underline"
+          >
+            Go back
+          </Link>
+        </p>
       </div>
     </div>
   );
