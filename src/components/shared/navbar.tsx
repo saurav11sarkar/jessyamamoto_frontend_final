@@ -83,7 +83,7 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { label: "Find Care", href: "/#categories" },
+    { label: "Find Trusted Care", href: "/#categories" },
     { label: "Cities", href: "/#cities" },
     { label: "Membership", href: "/membership" },
     { label: "Become a Partner", href: "/find-job/1?role=find job" },
@@ -102,7 +102,7 @@ const Navbar = () => {
                 alt="JetSet Cares"
                 width={1000}
                 height={1000}
-                className="object-cover h-[70px] w-[70px]"
+                className="object-cover h-[100px] w-[100px]"
                 priority
               />
             </div>
