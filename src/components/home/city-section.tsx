@@ -116,12 +116,6 @@ const CitySection = () => {
 
   const countriesData = apiResponse?.data || [];
 
-  React.useEffect(() => {
-    if (countriesData.length > 0 && !expandedCountry) {
-      setExpandedCountry(countriesData[0].countryName);
-    }
-  }, [countriesData, expandedCountry]);
-
   const toggleCountry = (countryName: string) => {
     setExpandedCountry(expandedCountry === countryName ? null : countryName);
   };
