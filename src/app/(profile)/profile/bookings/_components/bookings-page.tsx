@@ -34,7 +34,15 @@ interface BookingProgress {
 
 interface Booking {
   _id: string;
-  userId: string;
+  userId:
+    | string
+    | {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        profileImage?: string;
+        role?: string;
+      };
   serviceId: {
     _id: string;
     firstName: string;
@@ -168,14 +176,22 @@ const BookingsPage = () => {
     });
   };
 
-  const getProviderName = (booking: Booking) => {
+  const isPartner = userProfile?.role === "find job";
+
+  const getBookingPartyName = (booking: Booking) => {
+    if (isPartner && typeof booking.userId === "object" && booking.userId) {
+      return `${booking.userId.firstName || ""} ${booking.userId.lastName || ""}`.trim();
+    }
     if (booking.serviceId?.userId?.firstName) {
       return `${booking.serviceId.userId.firstName} ${booking.serviceId.userId.lastName}`;
     }
     return `${booking.serviceId?.firstName || ""} ${booking.serviceId?.lastName || ""}`.trim();
   };
 
-  const getProviderImage = (booking: Booking) => {
+  const getBookingPartyImage = (booking: Booking) => {
+    if (isPartner && typeof booking.userId === "object" && booking.userId) {
+      return booking.userId.profileImage || "";
+    }
     return booking.serviceId?.userId?.profileImage || "";
   };
 
@@ -249,11 +265,13 @@ const BookingsPage = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              My Bookings
+              {isPartner ? "Service Bookings" : "My Bookings"}
             </span>
           </h1>
           <p className="text-gray-500 mt-2">
-            View and manage all your bookings
+            {isPartner
+              ? "See which Parents booked your services"
+              : "See the services you booked as a Parent"}
           </p>
         </div>
 
@@ -285,21 +303,32 @@ const BookingsPage = () => {
               No bookings yet
             </h3>
             <p className="text-gray-500 mb-6">
-              Browse care providers to make your first booking.
+              {isPartner
+                ? "No one has booked your services yet."
+                : "Browse care providers to make your first booking."}
             </p>
-            <Link
-              href="/#categories"
-              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors inline-block"
-            >
-              Browse Providers
-            </Link>
+            {isPartner ? (
+              <Link
+                href="/profile/services"
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors inline-block"
+              >
+                View My Services
+              </Link>
+            ) : (
+              <Link
+                href="/#categories"
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors inline-block"
+              >
+                Browse Providers
+              </Link>
+            )}
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredBookings.map((booking) => {
-                const providerImage = getProviderImage(booking);
-                const providerName = getProviderName(booking);
+                const bookingPartyImage = getBookingPartyImage(booking);
+                const bookingPartyName = getBookingPartyName(booking);
                 const progressPercent =
                   booking.bookingProgress?.totalSteps > 0
                     ? (booking.bookingProgress.step /
@@ -314,16 +343,16 @@ const BookingsPage = () => {
                   >
                     <div className="flex items-start gap-4">
                       <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                        {providerImage ? (
+                        {bookingPartyImage ? (
                           <Image
-                            src={providerImage}
-                            alt={providerName}
+                            src={bookingPartyImage}
+                            alt={bookingPartyName}
                             fill
                             className="object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-semibold text-lg">
-                            {providerName.charAt(0).toUpperCase()}
+                            {bookingPartyName.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
@@ -332,11 +361,16 @@ const BookingsPage = () => {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900 truncate">
-                              {providerName}
+                              {bookingPartyName}
                             </h3>
                             <p className="text-sm text-primary font-medium">
-                              {booking.categoryId?.name}
+                              {isPartner ? "Booked by Parent" : booking.categoryId?.name}
                             </p>
+                            {isPartner && (
+                              <p className="text-xs text-slate-500 mt-1">
+                                Service: {booking.categoryId?.name}
+                              </p>
+                            )}
                           </div>
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium capitalize flex-shrink-0 ${

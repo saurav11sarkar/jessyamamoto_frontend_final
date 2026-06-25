@@ -38,7 +38,7 @@ export default function BlogPage() {
   const blogs = data?.data || [];
 
   return (
-    <div className="pt-28 pb-16">
+    <div className="pt-28 pb-16 mt-10">
       <div className="container px-4 sm:px-6">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">

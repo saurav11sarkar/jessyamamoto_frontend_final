@@ -5,7 +5,9 @@ import { MoveRight, Sparkles, ShieldCheck, Globe2 } from "lucide-react";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import RoleSelectionModal from "@/components/home/RoleSelectionModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 interface Category {
@@ -32,9 +34,9 @@ const fetchCategories = async (): Promise<Category[]> => {
 export default function CategoriesPage() {
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null,
-  );
+  const [addingCategoryId, setAddingCategoryId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories"],
@@ -59,6 +61,57 @@ export default function CategoriesPage() {
 
   const isCategoryDisabled = (id: string) =>
     userProfile?.category?.includes(id);
+
+  const handleCategoryClick = async (category: Category) => {
+    if (!session || !token) {
+      router.push(`/login?callbackUrl=${encodeURIComponent("/category")}`);
+      return;
+    }
+
+    if (session.user.role !== "find job" || !userProfile) {
+      toast.error("Only Partner accounts can add services.");
+      return;
+    }
+
+    setAddingCategoryId(category._id);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/service/register-service`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            role: userProfile.role,
+            categoryId: category._id,
+            gender: userProfile.gender,
+            ...(userProfile.country ? { country: userProfile.country } : {}),
+            ...(userProfile.city ? { city: userProfile.city } : {}),
+            ...(userProfile.hourRate && userProfile.hourRate > 0
+              ? { hourRate: userProfile.hourRate }
+              : {}),
+            subscriptionId: userProfile.subscription || "",
+          }),
+        },
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to add service");
+      }
+
+      toast.success(`${category.name} added to your Partner profile.`);
+      await queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add service",
+      );
+    } finally {
+      setAddingCategoryId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] mt-16">
@@ -117,11 +170,13 @@ export default function CategoriesPage() {
                 return (
                   <div
                     key={cat._id}
-                    onClick={() => !disabled && setSelectedCategory(cat)}
+                    onClick={() => !disabled && void handleCategoryClick(cat)}
                     className={`group relative bg-white rounded-[2rem] p-3 border border-gray-100 shadow-sm transition-all duration-500 flex flex-col h-full ${
                       disabled
                         ? "opacity-60 cursor-not-allowed"
-                        : "hover:shadow-xl hover:-translate-y-2 cursor-pointer"
+                        : addingCategoryId === cat._id
+                          ? "opacity-80 cursor-wait"
+                          : "hover:shadow-xl hover:-translate-y-2 cursor-pointer"
                     }`}
                   >
                     {/* Image Container */}
@@ -133,10 +188,12 @@ export default function CategoriesPage() {
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                       {/* Overlay for disabled state */}
-                      {disabled && (
+                      {(disabled || addingCategoryId === cat._id) && (
                         <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
                           <span className="bg-slate-900 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
-                            Already Added
+                            {addingCategoryId === cat._id
+                              ? "Adding..."
+                              : "Already Added"}
                           </span>
                         </div>
                       )}
@@ -174,17 +231,6 @@ export default function CategoriesPage() {
               })}
         </div>
       </section>
-
-      {/* Role Selection Modal */}
-      {selectedCategory && (
-        <RoleSelectionModal
-          isOpen={!!selectedCategory}
-          onClose={() => setSelectedCategory(null)}
-          categoryName={selectedCategory.name}
-          categoryId={selectedCategory._id}
-          userProfile={userProfile}
-        />
-      )}
     </div>
   );
 }

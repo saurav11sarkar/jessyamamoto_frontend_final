@@ -21,7 +21,7 @@ const AcademySection = () => {
   };
 
   return (
-    <section className="py-20 bg-gradient-to-r from-[#E9E5FF] to-[#D9D0FF] overflow-hidden">
+    <section className="py-24 bg-gradient-to-r from-[#E9E5FF] to-[#D9D0FF] overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left Side Content */}

@@ -2,10 +2,11 @@
 import React from "react";
 import { Button } from "../ui/button";
 import { Shield, Star, Heart, Clock } from "lucide-react";
+import Link from "next/link";
 
 const ProviderSection = () => {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-24 bg-white">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-[#0A2B3E] mb-4">
           Become a JetSet Care Partner
@@ -52,9 +53,11 @@ const ProviderSection = () => {
         </div>
 
         <div className="hidden sm:block">
-          <Button className="rounded-full px-8 h-12 bg-[#40E0D0] hover:bg-[#2CB0A0] text-black">
-            Apply as a JetSet Care Partner
-          </Button>
+          <Link href={`/signup`}>
+            <Button className="rounded-full px-8 h-12 bg-[#40E0D0] hover:bg-[#2CB0A0] text-black">
+              Apply as a JetSet Care Partner
+            </Button>
+          </Link>
         </div>
 
         <div className="block sm:hidden">

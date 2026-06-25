@@ -8,7 +8,6 @@ import {
   User,
   LogOut,
   Settings,
-  Info,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,25 +25,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userData, setUserData] = useState<any>(null);
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-
-  const router = useRouter();
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
 
@@ -83,11 +71,14 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { label: "Find Care", href: "/#categories" },
+    { label: "Find Trusted Care", href: "/#categories" },
     { label: "Cities", href: "/#cities" },
     { label: "Membership", href: "/membership" },
-    { label: "Become a Partner", href: "/find-job/1?role=find job" },
   ];
+
+  if (!session) {
+    navLinks.push({ label: "Become a Partner", href: "/signup" });
+  }
 
   return (
     <>
@@ -102,7 +93,7 @@ const Navbar = () => {
                 alt="JetSet Cares"
                 width={1000}
                 height={1000}
-                className="object-cover h-[70px] w-[70px]"
+                className="object-cover h-[100px] w-[100px]"
                 priority
               />
             </div>
@@ -177,12 +168,11 @@ const Navbar = () => {
                       Log In
                     </Button>
                   </Link>
-                  <Button
-                    onClick={() => setIsJoinModalOpen(true)}
-                    className="rounded-full bg-[#2ed3c7] px-6 text-sm font-semibold text-slate-950 hover:bg-[#22c1b5]"
-                  >
-                    Join JetSet
-                  </Button>
+                  <Link href="/signup">
+                    <Button className="rounded-full bg-[#2ed3c7] px-6 text-sm font-semibold text-slate-950 hover:bg-[#22c1b5]">
+                      Join JetSet
+                    </Button>
+                  </Link>
                 </>
               )}
             </div>
@@ -264,15 +254,11 @@ const Navbar = () => {
                             Log In
                           </Button>
                         </Link>
-                        <Button
-                          onClick={() => {
-                            setIsOpen(false);
-                            setIsJoinModalOpen(true);
-                          }}
-                          className="w-full rounded-full bg-[#2ed3c7] text-slate-950 hover:bg-[#22c1b5]"
-                        >
-                          Join JetSet
-                        </Button>
+                        <Link href="/signup" onClick={() => setIsOpen(false)}>
+                          <Button className="w-full rounded-full bg-[#2ed3c7] text-slate-950 hover:bg-[#22c1b5]">
+                            Join JetSet
+                          </Button>
+                        </Link>
                       </>
                     ) : (
                       <Button
@@ -290,58 +276,6 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
-
-      <Dialog open={isJoinModalOpen} onOpenChange={setIsJoinModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-3">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <Info className="h-8 w-8 text-primary" />
-            </div>
-            <DialogTitle className="text-2xl font-bold">
-              Get Started
-            </DialogTitle>
-            <DialogDescription className="text-base text-gray-600">
-              Choose how you want to use JetSet Cares
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col sm:flex-row gap-4 py-4">
-            <button
-              onClick={() => {
-                setIsJoinModalOpen(false);
-                router.push("/register?role=find care");
-              }}
-              className="flex-1 bg-white border-2 border-gray-200 hover:border-primary p-5 rounded-xl transition-all duration-200 hover:shadow-lg text-left group"
-            >
-              <h3 className="text-lg font-semibold text-[#0A0A23] mb-2">
-                I need care
-              </h3>
-              <p className="text-sm text-[#3B3B4F] mb-3">
-                Find trusted care providers in your area.
-              </p>
-              <div className="w-full py-2 px-4 text-white text-sm rounded-full font-bold bg-primary group-hover:bg-primary/90 text-center">
-                Family Account
-              </div>
-            </button>
-            <button
-              onClick={() => {
-                setIsJoinModalOpen(false);
-                router.push("/register?role=find job");
-              }}
-              className="flex-1 bg-white border-2 border-gray-200 hover:border-primary p-5 rounded-xl transition-all duration-200 hover:shadow-lg text-left group"
-            >
-              <h3 className="text-lg font-semibold text-[#0A0A23] mb-2">
-                I provide care
-              </h3>
-              <p className="text-sm text-[#3B3B4F] mb-3">
-                Join as a trusted partner and find jobs.
-              </p>
-              <div className="w-full py-2 px-4 text-white text-sm rounded-full font-bold bg-primary group-hover:bg-primary/90 text-center">
-                Partner Account
-              </div>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

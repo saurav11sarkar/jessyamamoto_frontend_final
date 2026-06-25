@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import FindCareReviewCarousel from "../../all-find-care/_components/find-care-review-carousel";
+import FindCareReviewCarousel from "./find-care-review-carousel";
 import { useSearchParams } from "next/navigation";
 import { ProfileCardSkeleton } from "@/components/shared/find-job-care/profile-card-skeleton";
 import { BannerSkeleton } from "@/components/shared/find-job-care/banner-skeleton";

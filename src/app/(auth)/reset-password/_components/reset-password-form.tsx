@@ -4,7 +4,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -116,18 +115,17 @@ const ResetPasswordForm = () => {
             name="newPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      className="h-[45px] border border-black pr-10"
+                      placeholder="New password"
+                      className="h-12 rounded-xl border-slate-200 bg-slate-50/70 pr-10 text-slate-900 placeholder:text-slate-400 focus:border-[#3ee0cf] focus-visible:ring-[#3ee0cf]"
                       {...field}
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-gray-700 focus:outline-none"
                       onClick={togglePasswordVisibility}
                     >
                       {showPassword ? (
@@ -149,18 +147,17 @@ const ResetPasswordForm = () => {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      className="h-[45px] border border-black pr-10"
+                      placeholder="Confirm new password"
+                      className="h-12 rounded-xl border-slate-200 bg-slate-50/70 pr-10 text-slate-900 placeholder:text-slate-400 focus:border-[#3ee0cf] focus-visible:ring-[#3ee0cf]"
                       {...field}
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-gray-700 focus:outline-none"
                       onClick={toggleConfirmPasswordVisibility}
                     >
                       {showConfirmPassword ? (

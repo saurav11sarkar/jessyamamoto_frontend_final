@@ -6,7 +6,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -79,18 +78,17 @@ const ForgotPasswordForm = () => {
   return (
     <div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="Enter your email"
-                    className="h-[45px] border border-black"
+                    placeholder="Email address"
+                    className="h-12 rounded-xl border-slate-200 bg-slate-50/70 px-4 text-slate-900 placeholder:text-slate-400 focus:border-[#3ee0cf] focus-visible:ring-[#3ee0cf]"
                     {...field}
                   />
                 </FormControl>
@@ -103,11 +101,13 @@ const ForgotPasswordForm = () => {
         </form>
       </Form>
 
-      <div>
-        <h3 className="text-center mt-5">
+      <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4 text-center">
+        <h3 className="text-sm text-slate-600">
           Don’t have an account?{" "}
-          <Link href={"/sign-up"}>
-            <span className="font-semibold hover:underline">Sign Up</span>
+          <Link href={"/signup"}>
+            <span className="font-semibold text-[#1b9f92] hover:underline">
+              Sign Up
+            </span>
           </Link>
         </h3>
       </div>

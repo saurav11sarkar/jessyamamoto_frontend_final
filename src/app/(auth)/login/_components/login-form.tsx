@@ -5,27 +5,19 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { useState } from "react";
-import { Eye, EyeOff, Info } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -37,8 +29,8 @@ type FormType = z.infer<typeof formSchema>;
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const form = useForm<FormType>({
     resolver: zodResolver(formSchema),
@@ -55,16 +47,17 @@ const LoginForm = () => {
         email: payload.email,
         password: payload.password,
         redirect: false,
+        callbackUrl,
       });
 
       if (res?.error) {
         toast.error(res.error);
       } else {
         toast.success("Login successful!");
-        window.location.href = "/";
+        window.location.href = res?.url || callbackUrl;
       }
     } catch (error) {
-      void error;
+      console.log(`login error : ${error}`);
       toast.error("Something went wrong!");
     } finally {
       setIsLoading(false);
@@ -82,18 +75,17 @@ const LoginForm = () => {
   return (
     <div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="Enter your email"
-                    className="h-[45px] border border-black"
+                    placeholder="Email address"
+                    className="h-12 rounded-xl border-slate-200 bg-slate-50/70 px-4 text-slate-900 placeholder:text-slate-400 focus:border-[#3ee0cf] focus-visible:ring-[#3ee0cf]"
                     {...field}
                   />
                 </FormControl>
@@ -107,18 +99,17 @@ const LoginForm = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      className="h-[45px] border border-black pr-10"
+                      placeholder="Password"
+                      className="h-12 rounded-xl border-slate-200 bg-slate-50/70 pr-10 text-slate-900 placeholder:text-slate-400 focus:border-[#3ee0cf] focus-visible:ring-[#3ee0cf]"
                       {...field}
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-gray-700 focus:outline-none"
                       onClick={togglePasswordVisibility}
                     >
                       {showPassword ? (
@@ -134,95 +125,48 @@ const LoginForm = () => {
             )}
           />
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500">
+              Secure sign in for JetSet Cares accounts
+            </p>
             <Link href={"/forgot-password"}>
-              <h4 className="underline text-sm">Forgot Password?</h4>
+              <h4 className="text-sm font-medium text-[#1b9f92] underline underline-offset-4">
+                Forgot Password?
+              </h4>
             </Link>
           </div>
 
           <Button
             disabled={isLoading}
             type="submit"
-            className="h-[45px] w-full text-white disabled:cursor-not-allowed"
+            className="h-12 w-full rounded-full bg-[#3ee0cf] text-slate-950 shadow-lg transition hover:bg-[#2bcfbe] disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <Spinner />
                 <span>Log In</span>
               </div>
             ) : (
-              `Log In`
+              <span className="inline-flex items-center gap-2">
+                Log In
+                <ArrowRight className="h-4 w-4" />
+              </span>
             )}
           </Button>
         </form>
       </Form>
 
-      {/* Sign Up Section with Role Selection */}
-      <div className="text-center mt-5">
-        <h3 className="text-sm">
-          Don&apos;t have an account?{" "}
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="font-semibold hover:underline text-primary"
+      <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4 text-center">
+        <h3 className="text-sm text-slate-600">
+          Don’t have an account?{" "}
+          <Link
+            href="/signup"
+            className="font-semibold text-[#1b9f92] hover:underline"
           >
             Sign Up
-          </button>
+          </Link>
         </h3>
       </div>
-
-      {/* Role Selection Modal for Registration */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-3">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <Info className="h-8 w-8 text-primary" />
-            </div>
-            <DialogTitle className="text-2xl font-bold">
-              Create Account
-            </DialogTitle>
-            <DialogDescription className="text-base text-gray-600">
-              Choose how you want to use JetSet Cares
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col sm:flex-row gap-4 py-4">
-            <button
-              onClick={() => {
-                setIsModalOpen(false);
-                router.push("/find-care/1?role=find care");
-              }}
-              className="flex-1 bg-white border-2 border-gray-200 hover:border-primary p-5 rounded-xl transition-all duration-200 hover:shadow-lg text-left group"
-            >
-              <h3 className="text-lg font-semibold text-[#0A0A23] mb-2">
-                I&apos;m looking for a caregiver
-              </h3>
-              <p className="text-sm text-[#3B3B4F] mb-3">
-                Find trusted care providers in your area.
-              </p>
-              <div className="w-full py-2 px-4 text-white text-sm rounded-full font-bold bg-primary group-hover:bg-primary/90 text-center">
-                Parent &rarr;
-              </div>
-            </button>
-            <button
-              onClick={() => {
-                setIsModalOpen(false);
-                router.push("/find-job/1?role=find job");
-              }}
-              className="flex-1 bg-white border-2 border-gray-200 hover:border-primary p-5 rounded-xl transition-all duration-200 hover:shadow-lg text-left group"
-            >
-              <h3 className="text-lg font-semibold text-[#0A0A23] mb-2">
-                I&apos;m looking for a caregiving job
-              </h3>
-              <p className="text-sm text-[#3B3B4F] mb-3">
-                Create a profile and find caregiving jobs.
-              </p>
-              <div className="w-full py-2 px-4 text-white text-sm rounded-full font-bold bg-primary group-hover:bg-primary/90 text-center">
-                Find Trusted Care &rarr;
-              </div>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
