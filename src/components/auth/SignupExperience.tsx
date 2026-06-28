@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import {
-  Ban,
   ChevronLeft,
   Eye,
   EyeOff,
@@ -147,7 +146,7 @@ export default function SignupExperience() {
   const [selectedRole, setSelectedRole] = useState<PublicRole | "">(
     existingRole || "",
   );
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [parentForm, setParentForm] = useState(EMPTY_PARENT_FORM);
   const [caregiverForm, setCaregiverForm] = useState(EMPTY_CAREGIVER_FORM);
   const [caregiverStep, setCaregiverStep] = useState<CaregiverStep>(0);
@@ -195,9 +194,10 @@ export default function SignupExperience() {
     [countriesData],
   );
 
-  const selectedCategory = useMemo(
-    () => categories.find((category) => category._id === selectedCategoryId) || null,
-    [categories, selectedCategoryId],
+  const selectedCategories = useMemo(
+    () =>
+      categories.filter((category) => selectedCategoryIds.includes(category._id)),
+    [categories, selectedCategoryIds],
   );
 
   const parentCities = useMemo(() => {
@@ -221,9 +221,6 @@ export default function SignupExperience() {
   }, [countriesData, caregiverForm.country]);
 
   const selectedDaysCount = caregiverSchedule.filter((day) => day.selected).length;
-  const isParentLocked = existingRole === "find job";
-  const isCaregiverLocked = existingRole === "find care";
-
   useEffect(() => {
     if (existingRole) return;
     if (requestedRole === "find care" || requestedRole === "find job") {
@@ -234,12 +231,17 @@ export default function SignupExperience() {
   }, [existingRole, requestedRole]);
 
   const handleRoleSelect = (role: PublicRole) => {
-    if (role === "find care" && isParentLocked) return;
-    if (role === "find job" && isCaregiverLocked) return;
-
     setSelectedRole(role);
     setRootStep(2);
     setCaregiverStep(0);
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId],
+    );
   };
 
   const updateParentField = (
@@ -326,8 +328,8 @@ export default function SignupExperience() {
 
   const handleCaregiverNext = () => {
     if (caregiverStep === 0) {
-      if (!selectedCategoryId) {
-        toast.error("Please select one service category for signup.");
+      if (selectedCategoryIds.length === 0) {
+        toast.error("Please select at least one service category for signup.");
         return;
       }
       setCaregiverStep(1);
@@ -437,7 +439,6 @@ export default function SignupExperience() {
 
       const payload = new FormData();
       payload.append("role", "find job");
-      payload.append("categoryId", selectedCategoryId);
       payload.append("email", caregiverForm.email);
       payload.append("password", caregiverForm.password);
       payload.append("firstName", caregiverForm.firstName);
@@ -456,17 +457,23 @@ export default function SignupExperience() {
         payload.append("profileImage", caregiverProfileImage);
       }
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/service/register-service`,
-        {
-          method: "POST",
-          body: payload,
-        },
-      );
+      for (const categoryId of selectedCategoryIds) {
+        const categoryPayload = new FormData();
+        payload.forEach((value, key) => categoryPayload.append(key, value));
+        categoryPayload.append("categoryId", categoryId);
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || "Unable to create caregiver account");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/service/register-service`,
+          {
+            method: "POST",
+            body: categoryPayload,
+          },
+        );
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || "Unable to create caregiver account");
+        }
       }
 
       setCaregiverProfileImage(null);
@@ -561,22 +568,8 @@ export default function SignupExperience() {
                 <button
                   type="button"
                   onClick={() => handleRoleSelect("find care")}
-                  disabled={isParentLocked}
-                  className={`group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-6 text-left transition-all duration-200 ${
-                    isParentLocked
-                      ? "cursor-not-allowed"
-                      : "hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
-                  }`}
+                  className="group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
                 >
-                  {isParentLocked && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-100/80 backdrop-blur-[1px]">
-                      <Ban className="mb-2 h-8 w-8 text-red-500" />
-                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-red-600">
-                        Not Allowed
-                      </span>
-                    </div>
-                  )}
-
                   <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e9fbf8] md:h-20 md:w-20">
                     <Image
                       src="/icon1.png"
@@ -603,22 +596,8 @@ export default function SignupExperience() {
                 <button
                   type="button"
                   onClick={() => handleRoleSelect("find job")}
-                  disabled={isCaregiverLocked}
-                  className={`group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-6 text-left transition-all duration-200 ${
-                    isCaregiverLocked
-                      ? "cursor-not-allowed"
-                      : "hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
-                  }`}
+                  className="group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
                 >
-                  {isCaregiverLocked && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-100/80 backdrop-blur-[1px]">
-                      <Ban className="mb-2 h-8 w-8 text-red-500" />
-                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-red-600">
-                        Not Allowed
-                      </span>
-                    </div>
-                  )}
-
                   <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e9fbf8] md:h-20 md:w-20">
                     <Image
                       src="/icon2.png"
@@ -833,9 +812,10 @@ export default function SignupExperience() {
                     {caregiverHeading}
                   </h3>
                 </div>
-                {selectedCategory && (
+                {selectedCategories.length > 0 && (
                   <div className="hidden rounded-full bg-[#dffbf8] px-4 py-2 text-sm font-semibold text-[#149d90] md:block">
-                    {selectedCategory.name}
+                    {selectedCategories.length} categor
+                    {selectedCategories.length === 1 ? "y" : "ies"} selected
                   </div>
                 )}
               </div>
@@ -863,12 +843,12 @@ export default function SignupExperience() {
                         />
                       ))
                     : categories.map((category) => {
-                        const active = selectedCategoryId === category._id;
+                        const active = selectedCategoryIds.includes(category._id);
                         return (
                           <button
                             key={category._id}
                             type="button"
-                            onClick={() => setSelectedCategoryId(category._id)}
+                            onClick={() => toggleCategory(category._id)}
                             className={`overflow-hidden rounded-[1.75rem] border bg-white text-left transition-all ${
                               active
                                 ? "border-[#3ee0cf] shadow-[0_18px_45px_rgba(62,224,207,0.24)] ring-2 ring-[#b8f7f0]"
@@ -900,7 +880,7 @@ export default function SignupExperience() {
                                 )}
                               </div>
                               <p className="mt-4 text-sm font-medium text-[#16978e]">
-                                {active ? "Ready for next step" : "Click to select"}
+                                {active ? "Selected" : "Click to select"}
                               </p>
                             </div>
                           </button>
@@ -1215,7 +1195,9 @@ export default function SignupExperience() {
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
-                {selectedCategory ? `Selected category: ${selectedCategory.name}` : "Choose the path that fits you best."}
+                {selectedCategories.length
+                  ? `Selected categories: ${selectedCategories.map((category) => category.name).join(", ")}`
+                  : "Choose the path that fits you best."}
               </p>
               <div className="flex gap-3">
                 <Button

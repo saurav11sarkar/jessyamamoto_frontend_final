@@ -1,7 +1,7 @@
 // src/components/steps/LocationStep.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
@@ -57,7 +57,7 @@ export function LocationStep({
     : [];
 
   // Helper function to get cities with their neighborhoods
-  const getCityNeighborhoods = (countryName: string, cityName: string): string[] => {
+  const getCityNeighborhoods = useCallback((countryName: string, cityName: string): string[] => {
     const country = countriesData?.find((c) => c.countryName === countryName);
     if (!country) return [];
 
@@ -69,7 +69,7 @@ export function LocationStep({
 
     // Old format - no neighborhoods available
     return [];
-  };
+  }, [countriesData]);
 
   // Update cities when country changes
   useEffect(() => {
@@ -86,11 +86,9 @@ export function LocationStep({
       }
 
       setAvailableCities(cities);
-      setSelectedCity("");
-      setCustomCity("");
-      setUseCustomCity(false);
-      setSelectedNeighborhood("");
-      setAvailableNeighborhoods([]);
+      setSelectedCity((current) => (current && cities.includes(current) ? current : ""));
+      setCustomCity((current) => (current ? current : ""));
+      setSelectedNeighborhood((current) => (current ? current : ""));
     } else {
       setAvailableCities([]);
       setAvailableNeighborhoods([]);
@@ -106,7 +104,7 @@ export function LocationStep({
     } else {
       setAvailableNeighborhoods([]);
     }
-  }, [selectedCountry, selectedCity]);
+  }, [selectedCountry, selectedCity, getCityNeighborhoods]);
 
   // Set initial values if provided
   useEffect(() => {
@@ -159,7 +157,14 @@ export function LocationStep({
             </label>
             <select
               value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
+              onChange={(e) => {
+                setSelectedCountry(e.target.value);
+                setSelectedCity("");
+                setCustomCity("");
+                setUseCustomCity(false);
+                setSelectedNeighborhood("");
+                setAvailableNeighborhoods([]);
+              }}
               className="w-full px-4 py-4 border-2 border-[#8E8E9A] rounded-full focus:outline-none focus:border-primary bg-white"
             >
               <option value="">Select a country...</option>

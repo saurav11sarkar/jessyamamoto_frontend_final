@@ -55,9 +55,8 @@ export function LocationStep({ data, onNext, onBack }: LocationStepProps) {
         .map((item) => item.cityName)
         .filter((value, index, self) => self.indexOf(value) === index);
       setAvailableCities(cities);
-      setSelectedCity("");
-      setCustomCity("");
-      setUseCustomCity(false);
+      setSelectedCity((current) => (current && cities.includes(current) ? current : ""));
+      setCustomCity((current) => (current ? current : ""));
     } else {
       setAvailableCities([]);
     }
@@ -120,7 +119,12 @@ export function LocationStep({ data, onNext, onBack }: LocationStepProps) {
             </label>
             <select
               value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
+              onChange={(e) => {
+                setSelectedCountry(e.target.value);
+                setSelectedCity("");
+                setCustomCity("");
+                setUseCustomCity(false);
+              }}
               className="w-full px-4 py-4 border-2 border-[#8E8E9A] rounded-full focus:outline-none focus:border-primary bg-white"
             >
               <option value="">Select a country...</option>

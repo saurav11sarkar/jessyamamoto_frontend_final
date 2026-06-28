@@ -132,6 +132,7 @@ export default function MultiStepForm() {
     mutationFn: async (password?: string) => {
       const apiBody: Record<string, any> = {
         role: formData.role,
+        categoryId: formData.categoryId,
         country: formData.country,
         city: formData.city,
         email: formData.email,
@@ -142,6 +143,10 @@ export default function MultiStepForm() {
         referralCode: ambassadorCode || undefined,
         onboardingSource: ambassadorCode ? 'city_ambassador' : undefined,
       };
+
+      if (formData.days && formData.days.day.length > 0) {
+        apiBody.days = convertToAPIFormat(formData.days);
+      }
 
       // Remove undefined/empty fields
       Object.keys(apiBody).forEach((key) => {
@@ -156,7 +161,7 @@ export default function MultiStepForm() {
       });
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        `${process.env.NEXT_PUBLIC_API_URL}/service/register-service`,
         {
           method: "POST",
           headers: {
