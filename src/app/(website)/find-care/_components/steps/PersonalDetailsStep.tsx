@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { PolicyModalLinks } from "@/components/shared/policy-modal-links";
 
 interface PersonalDetailsStepProps {
   onNext: (data: {
@@ -122,19 +122,7 @@ export function PersonalDetailsStep({
               className="text-sm cursor-pointer text-muted-foreground"
             >
               I agree to the{" "}
-              <Link
-                href="/terms-and-conditions"
-                className="text-primary underline underline-offset-2"
-              >
-                Terms and Conditions
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy-policy"
-                className="text-primary underline underline-offset-2"
-              >
-                Privacy Policy
-              </Link>
+              <PolicyModalLinks linkClassName="text-primary underline underline-offset-2" />
             </label>
           </div>
 

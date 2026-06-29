@@ -34,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PolicyModalLinks } from "@/components/shared/policy-modal-links";
 
 type PublicRole = "find care" | "find job";
 type RootStep = 1 | 2;
@@ -1043,13 +1044,7 @@ export default function SignupExperience() {
                   />
                   <span>
                     I agree to the{" "}
-                    <Link href="/terms-and-conditions" className="text-[#16978e] underline">
-                      Terms and Conditions
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy-policy" className="text-[#16978e] underline">
-                      Privacy Policy
-                    </Link>
+                    <PolicyModalLinks linkClassName="text-[#16978e] underline" />
                   </span>
                 </label>
               </div>

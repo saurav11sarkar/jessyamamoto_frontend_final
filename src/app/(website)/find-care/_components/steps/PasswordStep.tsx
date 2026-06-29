@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
+import { PolicyModalLinks } from "@/components/shared/policy-modal-links";
 
 interface PasswordStepProps {
   email: string;
@@ -95,19 +95,7 @@ export function PasswordStep({
 
           <p className="text-xs text-center text-gray-500 mt-4">
             By signing up, you agree to our{" "}
-            <Link
-              href="/terms-and-conditions"
-              className="text-blue-600 underline underline-offset-2"
-            >
-              Terms and Conditions
-            </Link>{" "}
-            and{" "}
-            <Link
-              href="/privacy-policy"
-              className="text-blue-600 underline underline-offset-2"
-            >
-              Privacy Policy
-            </Link>
+            <PolicyModalLinks linkClassName="text-blue-600 underline underline-offset-2" />
           </p>
         </div>
       </div>
