@@ -111,7 +111,7 @@ const Hero = () => {
               >
                 Find Trusted Care
               </Button>
-              <Link href={`/signup`}>
+              <Link href={`/signup?role=find%20job`}>
                 <Button
                   variant="outline"
                   className="h-12 rounded-full border-2 border-primary px-8 text-base font-semibold text-primary transition-all hover:bg-primary/10 sm:flex-1 w-full"

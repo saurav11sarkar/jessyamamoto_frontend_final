@@ -77,7 +77,7 @@ const Navbar = () => {
   ];
 
   if (!session) {
-    navLinks.push({ label: "Become a Partner", href: "/signup" });
+    navLinks.push({ label: "Become a Partner", href: "/signup?role=find%20job" });
   }
 
   return (

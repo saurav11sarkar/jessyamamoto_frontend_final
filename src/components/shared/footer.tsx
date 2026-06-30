@@ -18,7 +18,7 @@ const Footer = () => {
   ];
 
   const forPartners = [
-    { name: "Become a Partner", href: "/signup" },
+    { name: "Become a Partner", href: "/signup?role=find%20job" },
     { name: "Partner Resources", href: "/faq" },
     { name: "Partner Login", href: "/login" },
   ];
