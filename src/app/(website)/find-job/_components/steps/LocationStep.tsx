@@ -1,7 +1,7 @@
 // src/components/steps/LocationStep.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { FindJobDataTypes } from "../find-job-data-type";
@@ -9,7 +9,11 @@ import { FindJobDataTypes } from "../find-job-data-type";
 interface Country {
   _id: string;
   countryName: string;
-  cityName: string;
+  cities?: Array<{
+    cityName: string;
+    neighborhoods?: string[];
+  }>;
+  cityName?: string | string[];
 }
 
 interface LocationStepProps {
@@ -47,20 +51,37 @@ export function LocationStep({ data, onNext, onBack }: LocationStepProps) {
       )
     : [];
 
+  const getCitiesForCountry = useCallback((countryName: string) => {
+    if (!countriesData) return [];
+
+    const cities = countriesData
+      .filter((item) => item.countryName === countryName)
+      .flatMap((item) => {
+        if (item.cities?.length) {
+          return item.cities.map((city) => city.cityName);
+        }
+        if (Array.isArray(item.cityName)) {
+          return item.cityName;
+        }
+        return item.cityName ? [item.cityName] : [];
+      })
+      .map((city) => city.trim())
+      .filter(Boolean);
+
+    return Array.from(new Set(cities));
+  }, [countriesData]);
+
   // Update cities when country changes
   useEffect(() => {
     if (selectedCountry && countriesData) {
-      const cities = countriesData
-        .filter((item) => item.countryName === selectedCountry)
-        .map((item) => item.cityName)
-        .filter((value, index, self) => self.indexOf(value) === index);
+      const cities = getCitiesForCountry(selectedCountry);
       setAvailableCities(cities);
       setSelectedCity((current) => (current && cities.includes(current) ? current : ""));
       setCustomCity((current) => (current ? current : ""));
     } else {
       setAvailableCities([]);
     }
-  }, [selectedCountry, countriesData]);
+  }, [selectedCountry, countriesData, getCitiesForCountry]);
 
   // Restore from localStorage
   useEffect(() => {

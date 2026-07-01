@@ -20,7 +20,7 @@ const CareSection = () => {
           </p>
         </div>
 
-        <Link href={`/login`}>
+        <Link href="/signup">
           <button className="flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-semibold transition-all group mt-4">
             Get Started
             <ArrowRight

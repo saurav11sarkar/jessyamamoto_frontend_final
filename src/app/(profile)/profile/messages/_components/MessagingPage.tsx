@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { ArrowLeft, Search, Send } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,26 @@ import { useSocket } from "@/components/provider/SocketContext";
 import { toast } from "sonner";
 
 const getAvatarUrl = (value?: string | string[]) =>
-  Array.isArray(value) ? value[0] || "/default-avatar.jpg" : value || "/default-avatar.jpg";
+  Array.isArray(value) ? value[0] || "/placeholder.png" : value || "/placeholder.png";
 
 const getId = (value: any) => String(value?._id || value || "");
+
+const getFirstServiceId = (user: any) => {
+  const firstService = Array.isArray(user?.service) ? user.service[0] : user?.service;
+  return getId(firstService);
+};
+
+const getProfileHref = (user: any) => {
+  const serviceId = getFirstServiceId(user);
+  if (!serviceId) return "";
+
+  return user?.role === "find care"
+    ? `/all-find-jobs/${serviceId}`
+    : `/all-find-care/${serviceId}`;
+};
+
+const getDisplayName = (user: any) =>
+  `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "User";
 
 const getOtherUser = (chat: any, myId?: string) =>
   chat?.participants?.find((p: any) => p?._id && getId(p) !== String(myId));
@@ -50,6 +68,8 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const selectedChat =
     conversations.find((chat) => String(chat._id) === selectedConversationId) || null;
+  const selectedOtherUser = getOtherUser(selectedChat, myId);
+  const selectedOtherProfileHref = getProfileHref(selectedOtherUser);
 
   const fetchConversations = React.useCallback(async () => {
     if (!token || !baseUrl) return;
@@ -339,7 +359,7 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
                 <div className="flex-1 overflow-hidden">
                   <div className="flex justify-between items-center">
                     <h4 className="font-bold text-[#001F3F] truncate">
-                      {otherUser?.firstName || "User"}
+                      {getDisplayName(otherUser)}
                     </h4>
                     <span className="text-[10px] text-gray-400 font-medium">
                       {previewTime ? format(new Date(previewTime), "hh:mm a") : ""}
@@ -372,36 +392,75 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <Avatar className="h-10 w-10 border">
-                <AvatarImage
-                  src={getAvatarUrl(
-                    getOtherUser(selectedChat, myId)?.profileImage,
-                  )}
-                />
-              </Avatar>
-              <div>
-                <h4 className="font-bold text-[#001F3F]">
-                  {getOtherUser(selectedChat, myId)?.firstName || "User"}
-                </h4>
+              {selectedOtherProfileHref ? (
+                <Link
+                  href={selectedOtherProfileHref}
+                  className="flex items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00D1C1]"
+                >
+                  <Avatar className="h-10 w-10 border">
+                    <AvatarImage
+                      src={getAvatarUrl(selectedOtherUser?.profileImage)}
+                    />
+                    <AvatarFallback>
+                      {selectedOtherUser?.firstName?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-bold text-[#001F3F] hover:underline">
+                      {getDisplayName(selectedOtherUser)}
+                    </h4>
+                    <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider">
+                      Online
+                    </p>
+                  </div>
+                </Link>
+              ) : (
+                <>
+                  <Avatar className="h-10 w-10 border">
+                    <AvatarImage
+                      src={getAvatarUrl(selectedOtherUser?.profileImage)}
+                    />
+                    <AvatarFallback>
+                      {selectedOtherUser?.firstName?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-bold text-[#001F3F]">
+                      {getDisplayName(selectedOtherUser)}
+                    </h4>
                   <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider">
-                  Online
-                </p>
-              </div>
+                      Online
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
               {messages.map((msg) => {
                 const isMe =
                   getId(msg.senderId) === String(myId);
+                const sender = typeof msg.senderId === "object" ? msg.senderId : null;
+                const senderProfileHref = getProfileHref(sender);
+                const senderAvatar = (
+                  <Avatar className="h-8 w-8 border">
+                    <AvatarImage src={getAvatarUrl(sender?.profileImage)} />
+                    <AvatarFallback>{sender?.firstName?.[0] || "U"}</AvatarFallback>
+                  </Avatar>
+                );
                 return (
                   <div
                     key={msg._id}
                     className={`flex ${isMe ? "justify-end" : "justify-start"} items-end gap-2`}
                   >
                     {!isMe && (
-                      <Avatar className="h-8 w-8 border">
-                        <AvatarImage src="/default-avatar.jpg" />
-                      </Avatar>
+                      senderProfileHref ? (
+                        <Link href={senderProfileHref} aria-label="Open profile">
+                          {senderAvatar}
+                        </Link>
+                      ) : (
+                        senderAvatar
+                      )
                     )}
                     <div
                       className={`max-w-[70%] p-3 px-4 rounded-2xl text-[13px] leading-relaxed shadow-sm ${

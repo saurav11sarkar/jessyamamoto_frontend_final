@@ -1,5 +1,6 @@
 import { MoveRight, SquareCheckBig } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 import { Button } from "../ui/button";
 
@@ -89,11 +90,13 @@ const OurCommunity = () => {
           </div>
 
           <div>
-            <Button className="rounded-3xl h-[40px]">
-              <span>Get Started</span>
-              <span>
-                <MoveRight />
-              </span>
+            <Button asChild className="rounded-3xl h-[40px]">
+              <Link href="/signup">
+                <span>Get Started</span>
+                <span>
+                  <MoveRight />
+                </span>
+              </Link>
             </Button>
           </div>
         </div>

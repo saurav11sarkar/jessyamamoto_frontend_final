@@ -41,6 +41,8 @@ interface User {
   professionalSkill: string[];
   perferences: string[];
   location: string;
+  countery?: string;
+  city?: string;
   profileImage: string;
   bio: string;
   phone: string;
@@ -142,12 +144,17 @@ const AllFindCare = () => {
   });
 
   const caregivers = data?.data || [];
+  const getDisplayLocation = (caregiver: ServiceBaseUser) =>
+    caregiver.location ||
+    caregiver.user?.location ||
+    [caregiver.user?.city, caregiver.user?.countery].filter(Boolean).join(", ");
+
   const locationOptions = useMemo(
     () =>
       Array.from(
         new Set(
           caregivers
-            .map((caregiver) => caregiver.location || caregiver.user?.location)
+            .map(getDisplayLocation)
             .filter(Boolean),
         ),
       ),
@@ -378,7 +385,7 @@ const AllFindCare = () => {
                     }
                     tags={generateTags(caregiver)}
                     bio={caregiver.user?.bio || "No bio available"}
-                    location={caregiver.location}
+                    location={getDisplayLocation(caregiver)}
                     id={caregiver?._id}
                   />
                 ))

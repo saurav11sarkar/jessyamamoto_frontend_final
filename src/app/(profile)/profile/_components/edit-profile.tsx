@@ -82,6 +82,28 @@ const isImageSource = (value: string) =>
 
 const isPdfSource = (value: string) => /\.pdf(\?.*)?$/i.test(value);
 
+const normalizeLanguageNames = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (typeof item === "string") return item;
+      if (item && typeof item === "object") {
+        const record = item as Record<string, unknown>;
+        return (
+          record.language ||
+          record.languageName ||
+          Object.values(record).find((entry) => typeof entry === "string") ||
+          ""
+        );
+      }
+      return "";
+    })
+    .map(String)
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
 const formatFileSize = (size: number) => {
   if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
@@ -204,18 +226,18 @@ const EditProfilePage = () => {
   // Update cities when country changes
   const updateCities = (countryName: string) => {
     if (countryName && countries) {
-      const country = countries.find((c) => c.countryName === countryName);
-      let cities: string[] = [];
+      const cities = countries
+        .filter((country) => country.countryName === countryName)
+        .flatMap((country) => {
+          if (country.cities?.length) {
+            return country.cities.map((item) => item.cityName);
+          }
+          return country.cityName || [];
+        })
+        .map((city) => city.trim())
+        .filter(Boolean);
 
-      if (country?.cities && country.cities.length > 0) {
-        // New format with cities array
-        cities = country.cities.map((item) => item.cityName);
-      } else if (country?.cityName && country.cityName.length > 0) {
-        // Old format with cityName array
-        cities = country.cityName;
-      }
-
-      setAvailableCities(cities);
+      setAvailableCities(Array.from(new Set(cities)));
     } else {
       setAvailableCities([]);
     }
@@ -261,6 +283,18 @@ const EditProfilePage = () => {
   }, [form, countries, countryValue]);
 
   useEffect(() => {
+    if (!countryValue) {
+      setAvailableCities([]);
+      return;
+    }
+
+    updateCities(countryValue);
+    if (cityValue) {
+      updateNeighborhoods(countryValue, cityValue);
+    }
+  }, [countries, countryValue, cityValue]);
+
+  useEffect(() => {
     const fetchProfile = async () => {
       if (!session?.user?.accessToken) {
         setIsFetching(false);
@@ -288,16 +322,19 @@ const EditProfilePage = () => {
           new Set([primaryImage, ...(data.galary || [])].filter(Boolean)),
         ) as string[];
 
+        const country = data.country || data.countery || "";
+        const city = data.city || "";
+
         form.reset({
           firstName: data.firstName || "",
           lastName: data.lastName || "",
           email: data.email || "",
           phone: data.phone || "",
           bio: data.bio || "",
-          country: data.country || "",
-          city: data.city || "",
+          country,
+          city,
           experience: data.exprience || data.experience || 0,
-          language: data.language || [],
+          language: normalizeLanguageNames(data.language),
           languageLavel: data.languageLavel || "",
           profileImage: primaryImage,
           galary: photos,
@@ -330,16 +367,16 @@ const EditProfilePage = () => {
             : "",
         });
 
-        setCountryValue(data.country || "");
-        setCityValue(data.city || "");
+        setCountryValue(country);
+        setCityValue(city);
         setExistingPhotos(photos);
         setSelectedMainPhoto(primaryImage ? `existing:${primaryImage}` : "");
         setExistingCertificates(data.certifications || []);
 
-        if (data.country) {
-          updateCities(data.country);
-          if (data.city) {
-            updateNeighborhoods(data.country, data.city);
+        if (country) {
+          updateCities(country);
+          if (city) {
+            updateNeighborhoods(country, city);
           }
         }
       } catch (error) {
@@ -359,9 +396,15 @@ const EditProfilePage = () => {
       const selectedExistingMain = selectedMainPhoto.startsWith("existing:")
         ? selectedMainPhoto.replace("existing:", "")
         : "";
+      const orderedExistingPhotos = selectedExistingMain
+        ? [
+            selectedExistingMain,
+            ...existingPhotos.filter((photo) => photo !== selectedExistingMain),
+          ]
+        : existingPhotos;
       const payload = {
         ...values,
-        galary: existingPhotos,
+        galary: orderedExistingPhotos,
         certifications: existingCertificates,
         profileImage: selectedExistingMain,
         mainPhotoSource: selectedMainPhoto,

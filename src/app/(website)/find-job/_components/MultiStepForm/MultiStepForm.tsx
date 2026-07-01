@@ -85,7 +85,12 @@ export default function MultiStepForm() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setFormData((prev) => ({ ...prev, ...parsed }));
+        setFormData((prev) => ({
+          ...prev,
+          ...parsed,
+          role,
+          categoryId: categoryId || parsed.categoryId || prev.categoryId,
+        }));
       } catch (e) {
         console.error("Error parsing localStorage data:", e);
       }
@@ -103,7 +108,7 @@ export default function MultiStepForm() {
         subscriptionId: userProfile.subscription || prev.subscriptionId,
       }));
     }
-  }, [userProfile]);
+  }, [categoryId, role, userProfile]);
 
   // Save to localStorage whenever formData changes (exclude password)
   useEffect(() => {

@@ -33,7 +33,7 @@ const Banner = ({ title, description, banner }: BannerProps) => {
             {description}
           </p>
 
-          <Link href="/get-started">
+          <Link href="/signup">
             <button className="flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-semibold transition-all group mt-5">
               Get Started
               <ArrowRight

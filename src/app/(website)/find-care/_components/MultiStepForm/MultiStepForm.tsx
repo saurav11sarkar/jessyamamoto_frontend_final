@@ -172,22 +172,23 @@ export function MultiStepForm() {
   );
 
   // For logged-in user profile update
-  const updateProfile = useCallback(async () => {
+  const updateProfile = useCallback(async (overrides: Partial<FormData> = {}) => {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    const nextFormData = { ...formData, ...overrides };
 
     // Prepare API body for profile update
     const apiBody = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      gender: formData.gender,
-      country: formData.country,
-      city: formData.city,
-      neighborhoods: formData.neighborhood,
-      typeOfInterest: formData.type,
-      helpOfInterest: formData.help,
-      categoryId: formData.categoryId,
+      firstName: nextFormData.firstName,
+      lastName: nextFormData.lastName,
+      gender: nextFormData.gender,
+      country: nextFormData.country,
+      city: nextFormData.city,
+      neighborhoods: nextFormData.neighborhood,
+      typeOfInterest: nextFormData.type,
+      helpOfInterest: nextFormData.help,
+      categoryId: nextFormData.categoryId,
     };
 
     // Remove undefined fields
@@ -230,19 +231,20 @@ export function MultiStepForm() {
   }, [formData, token, router, isSubmitting, refetch]);
 
   // For logged-in user service registration
-  const registerServiceForLoggedInUser = useCallback(async () => {
-    if (isSubmitting) return;
+  const registerServiceForLoggedInUser = useCallback(async (overrides: Partial<FormData> = {}) => {
+    if (isSubmitting && Object.keys(overrides).length === 0) return;
 
     setIsSubmitting(true);
+    const nextFormData = { ...formData, ...overrides };
 
     // Prepare API body for service registration
     const apiBody = {
-      typeOfInterest: formData.type,
-      helpOfInterest: formData.help,
-      categoryId: formData.categoryId,
-      country: formData.country,
-      city: formData.city,
-      neighborhoods: formData.neighborhood,
+      typeOfInterest: nextFormData.type,
+      helpOfInterest: nextFormData.help,
+      categoryId: nextFormData.categoryId,
+      country: nextFormData.country,
+      city: nextFormData.city,
+      neighborhoods: nextFormData.neighborhood,
     };
 
     try {
@@ -320,8 +322,8 @@ export function MultiStepForm() {
             setFormData((p) => ({ ...p, ...data }));
 
             if (userProfile) {
-              updateProfile()
-                .then(() => registerServiceForLoggedInUser())
+              updateProfile(data)
+                .then(() => registerServiceForLoggedInUser(data))
                 .catch((err: unknown) => {
                   const message = err instanceof Error ? err.message : "Failed to update profile";
                   toast.error(message);
