@@ -287,7 +287,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
       )}
 
       <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-        <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+        <CardContent className="p-4 sm:p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
           {/* Left: Date Picker */}
           <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 border border-gray-50">
             <Calendar
@@ -313,7 +313,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
           </div>
 
           {/* Middle: Time Slots */}
-          <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-gray-50 flex flex-col items-center w-full max-w-lg">
+          <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8 border border-gray-50 flex flex-col items-center w-full max-w-lg">
             <p className="text-gray-400 text-sm mb-1">Available Time for</p>
             <h3 className="text-2xl font-semibold mb-6 text-gray-700">
               {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}

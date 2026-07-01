@@ -215,7 +215,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
         </div>
 
         {selectedPlanId && (
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button
               onClick={onBack}
               disabled={mutation.isPending}
@@ -227,7 +227,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
             <Button
               onClick={handleContinue}
               disabled={mutation.isPending}
-              className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg rounded-full font-semibold min-w-[250px] disabled:opacity-50"
+              className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg rounded-full font-semibold sm:min-w-[250px] disabled:opacity-50"
             >
               {mutation.isPending ? (
                 <>

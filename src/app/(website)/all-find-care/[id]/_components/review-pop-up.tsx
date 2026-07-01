@@ -104,7 +104,7 @@ const ReviewPopup = ({ isOpen, onClose, jobUserId }: ReviewPopupProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-[#1a2b3b]">
             Write a Review

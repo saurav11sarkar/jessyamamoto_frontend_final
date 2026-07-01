@@ -2,7 +2,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { Search, Send } from "lucide-react";
+import { ArrowLeft, Search, Send } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
@@ -296,9 +296,13 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
   });
 
   return (
-    <div className="flex h-[calc(100vh-100px)] bg-white overflow-hidden font-sans border rounded-lg m-4 shadow-sm">
+    <div className="flex h-[calc(100vh-100px)] bg-white overflow-hidden font-sans border rounded-lg m-2 sm:m-4 shadow-sm">
       {/* Sidebar */}
-      <div className="w-1/3 border-r flex flex-col bg-slate-50/50">
+      <div
+        className={`${
+          selectedConversationId ? "hidden md:flex" : "flex"
+        } w-full md:w-1/3 border-r flex-col bg-slate-50/50`}
+      >
         <div className="p-4 border-b bg-white">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -352,10 +356,22 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div
+        className={`${
+          selectedConversationId ? "flex" : "hidden md:flex"
+        } flex-1 flex-col bg-white`}
+      >
         {selectedChat ? (
           <>
             <div className="p-4 border-b flex items-center gap-3 bg-white">
+              <button
+                type="button"
+                onClick={() => setSelectedConversationId("")}
+                className="md:hidden -ml-1 mr-1 p-1 text-gray-500 hover:text-gray-800"
+                aria-label="Back to conversations"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
               <Avatar className="h-10 w-10 border">
                 <AvatarImage
                   src={getAvatarUrl(
