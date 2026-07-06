@@ -191,7 +191,9 @@ export default function SignupExperience() {
   const { data: countriesData = [], isLoading: isCountryLoading } = useQuery({
     queryKey: ["signup-countries"],
     queryFn: async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/country/`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/country/?limit=1000&sortBy=countryName&sortOrder=asc`,
+      );
       if (!response.ok) throw new Error("Failed to load countries");
       const json = await response.json();
       return (json.data || []) as Country[];

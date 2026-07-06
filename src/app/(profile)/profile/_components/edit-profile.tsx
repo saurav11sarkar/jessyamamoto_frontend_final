@@ -176,7 +176,7 @@ const EditProfilePage = () => {
     const fetchCountries = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/country/`,
+          `${process.env.NEXT_PUBLIC_API_URL}/country/?limit=1000&sortBy=countryName&sortOrder=asc`,
         );
         if (!response.ok) throw new Error("Failed to fetch countries");
         const json = await response.json();
@@ -193,7 +193,7 @@ const EditProfilePage = () => {
     const fetchLanguages = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/language`,
+          `${process.env.NEXT_PUBLIC_API_URL}/language?limit=1000&sortBy=languageName&sortOrder=asc`,
         );
         if (!response.ok) throw new Error("Failed to fetch languages");
         const json = await response.json();

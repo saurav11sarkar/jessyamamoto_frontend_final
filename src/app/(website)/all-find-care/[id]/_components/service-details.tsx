@@ -6,6 +6,7 @@ interface ServiceDetailsProps {
   canHelpWith: string[];
   education: string[];
   professionalSkills: string[];
+  languages: string[];
   hourlyRate: number;
   hideRate?: boolean;
   days: ServiceDay[];
@@ -25,6 +26,7 @@ export const ServiceDetails = ({
   canHelpWith = [],
   education = [],
   professionalSkills = [],
+  languages = [],
   hourlyRate = 0,
   hideRate = false,
   days = [],
@@ -110,7 +112,9 @@ export const ServiceDetails = ({
           </section>
 
           {/* Qualifications */}
-          {(education.length > 0 || professionalSkills.length > 0) && (
+          {(education.length > 0 ||
+            professionalSkills.length > 0 ||
+            languages.length > 0) && (
             <section>
               <h2 className="text-2xl font-bold mb-4">Qualifications</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -135,6 +139,24 @@ export const ServiceDetails = ({
                         {skill}
                       </p>
                     ))}
+                  </div>
+                )}
+
+                {languages.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2">
+                      Languages spoken
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {languages.map((lang, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 rounded-full border border-blue-600 text-blue-600 text-sm"
+                        >
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

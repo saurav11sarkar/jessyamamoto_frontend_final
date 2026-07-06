@@ -270,6 +270,7 @@ const FindJobsDetails = () => {
         canHelpWith={userInfo?.canHelpWith || []}
         education={userInfo?.education || []}
         professionalSkills={userInfo?.professionalSkill || []}
+        languages={userInfo?.language || []}
         hourlyRate={serviceData.data.hourRate || 0}
         days={serviceData.data.days || []}
         categoryName={categoryInfo?.name}

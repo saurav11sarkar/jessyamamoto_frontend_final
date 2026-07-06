@@ -262,6 +262,7 @@ const FindCareDetails = () => {
         canHelpWith={userInfo?.canHelpWith || []}
         education={userInfo?.education || []}
         professionalSkills={userInfo?.professionalSkill || []}
+        languages={userInfo?.language || []}
         hourlyRate={0}
         hideRate={true}
         days={serviceData.data.days || []}

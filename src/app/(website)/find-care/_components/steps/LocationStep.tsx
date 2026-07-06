@@ -42,7 +42,9 @@ export function LocationStep({
   const { data: countriesData, isLoading } = useQuery({
     queryKey: ["countries"],
     queryFn: async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/country/`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/country/?limit=1000&sortBy=countryName&sortOrder=asc`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch countries");
       }
