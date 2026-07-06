@@ -107,6 +107,19 @@ const DEFAULT_SCHEDULE: ScheduleDay[] = DAYS.map((day) => ({
   time: "09:00 AM-05:00 PM",
 }));
 
+const SCHEDULE_TIME_OPTIONS: string[] = Array.from({ length: 48 }, (_, index) => {
+  const hour24 = Math.floor(index / 2);
+  const minute = index % 2 === 0 ? "00" : "30";
+  const period = hour24 < 12 ? "AM" : "PM";
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return `${String(hour12).padStart(2, "0")}:${minute} ${period}`;
+});
+
+const parseScheduleTime = (time: string): [string, string] => {
+  const [start, end] = time.split("-").map((value) => value.trim());
+  return [start || SCHEDULE_TIME_OPTIONS[18], end || SCHEDULE_TIME_OPTIONS[34]];
+};
+
 const genderOptions = [
   { value: "female", label: "Female" },
   { value: "male", label: "Male" },
@@ -1168,14 +1181,47 @@ export default function SignupExperience() {
                           <p className="mb-2 font-semibold text-[#16324f]">
                             {item.day}
                           </p>
-                          <Input
-                            value={item.time}
-                            onChange={(e) =>
-                              updateScheduleTime(item.day, e.target.value)
-                            }
-                            className={`${fieldClass} bg-white`}
-                            placeholder="09:00 AM-05:00 PM"
-                          />
+                          {(() => {
+                            const [startTime, endTime] = parseScheduleTime(item.time);
+                            return (
+                              <div className="grid grid-cols-2 gap-2">
+                                <Select
+                                  value={startTime}
+                                  onValueChange={(value) =>
+                                    updateScheduleTime(item.day, `${value}-${endTime}`)
+                                  }
+                                >
+                                  <SelectTrigger className={`${fieldClass} bg-white`}>
+                                    <SelectValue placeholder="Start time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {SCHEDULE_TIME_OPTIONS.map((option) => (
+                                      <SelectItem key={option} value={option}>
+                                        {option}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Select
+                                  value={endTime}
+                                  onValueChange={(value) =>
+                                    updateScheduleTime(item.day, `${startTime}-${value}`)
+                                  }
+                                >
+                                  <SelectTrigger className={`${fieldClass} bg-white`}>
+                                    <SelectValue placeholder="End time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {SCHEDULE_TIME_OPTIONS.map((option) => (
+                                      <SelectItem key={option} value={option}>
+                                        {option}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            );
+                          })()}
                         </div>
                       ))}
                   </div>
@@ -1227,7 +1273,7 @@ export default function SignupExperience() {
                         Creating account
                       </>
                     ) : (
-                      "Create Find Trusted Care Account"
+                      "Create Account"
                     )}
                   </Button>
                 )}

@@ -11,6 +11,17 @@ import { Clock, Plus, Trash2 } from "lucide-react";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const TIME_SLOT_OPTIONS: string[] = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2);
+  const minute = index % 2 === 0 ? "00" : "30";
+  return `${String(hour).padStart(2, "0")}:${minute}`;
+});
+
+const parseSlot = (slot: string): [string, string] => {
+  const [start, end] = slot.split("-").map((value) => value.trim());
+  return [start || "10:00", end || "12:00"];
+};
+
 interface DayState {
   day: string;
   selected: boolean;
@@ -220,17 +231,37 @@ export function ScheduleStep({
                         </button>
                       </div>
                       <div className="space-y-2">
-                        {d.slots.map((slot, slotIdx) => (
+                        {d.slots.map((slot, slotIdx) => {
+                          const [slotStart, slotEnd] = parseSlot(slot);
+                          return (
                           <div key={slotIdx} className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={slot}
+                            <select
+                              value={slotStart}
                               onChange={(e) =>
-                                updateSlotTime(d.day, slotIdx, e.target.value)
+                                updateSlotTime(d.day, slotIdx, `${e.target.value}-${slotEnd}`)
                               }
-                              placeholder="09:00-17:00"
                               className="flex-1 px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
-                            />
+                            >
+                              {TIME_SLOT_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="text-gray-400">to</span>
+                            <select
+                              value={slotEnd}
+                              onChange={(e) =>
+                                updateSlotTime(d.day, slotIdx, `${slotStart}-${e.target.value}`)
+                              }
+                              className="flex-1 px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
+                            >
+                              {TIME_SLOT_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
                             {d.slots.length > 1 && (
                               <button
                                 type="button"
@@ -241,7 +272,8 @@ export function ScheduleStep({
                               </button>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
