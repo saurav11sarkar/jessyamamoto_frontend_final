@@ -94,7 +94,9 @@ const AllFindCare = () => {
   const id = searchParams.get("id");
   const session = useSession();
   const token = session?.data?.user?.accessToken;
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    () => searchParams.get("searchTerm") || "",
+  );
   const [locationFilter, setLocationFilter] = useState("all");
   const [availableFilter, setAvailableFilter] = useState("all");
   const [minHourRate, setMinHourRate] = useState("");

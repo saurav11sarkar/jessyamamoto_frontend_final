@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { consumeSelectedCity, onCitySelected } from "@/lib/selected-city";
 import {
   Search,
   ShieldCheck,
@@ -14,6 +15,7 @@ import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface Category {
   _id: string;
@@ -58,6 +60,12 @@ const Hero = () => {
   const [careType, setCareType] = useState("");
   const [date, setDate] = useState("");
 
+  useEffect(() => {
+    const selectedCity = consumeSelectedCity();
+    if (selectedCity) setCity(selectedCity);
+    return onCitySelected((selectedCity) => setCity(selectedCity));
+  }, []);
+
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["hero-categories"],
     queryFn: async () => {
@@ -69,16 +77,14 @@ const Hero = () => {
   });
 
   const handleSearch = () => {
-    if (careType) {
-      const params = new URLSearchParams();
-      if (city) params.set("city", city);
-      if (date) params.set("date", date);
-      router.push(`/all-find-care?id=${careType}&${params.toString()}`);
-    } else {
-      document
-        .getElementById("categories")
-        ?.scrollIntoView({ behavior: "smooth" });
+    if (!careType) {
+      toast.error("Please select a type of care to search.");
+      return;
     }
+    const params = new URLSearchParams();
+    if (city) params.set("searchTerm", city);
+    if (date) params.set("date", date);
+    router.push(`/all-find-care?id=${careType}&${params.toString()}`);
   };
 
   const handleCityClick = (cityName: string) => {
@@ -140,7 +146,10 @@ const Hero = () => {
               ))}
             </div>
 
-            <div className="w-full rounded-2xl border border-gray-200 bg-white p-3 shadow-lg sm:p-4">
+            <div
+              id="hero-search"
+              className="w-full rounded-2xl border border-gray-200 bg-white p-3 shadow-lg sm:p-4"
+            >
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

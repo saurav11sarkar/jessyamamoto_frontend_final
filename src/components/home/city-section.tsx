@@ -4,6 +4,8 @@ import { ChevronRight, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { setSelectedCity } from "@/lib/selected-city";
 
 interface CityObject {
   cityName: string;
@@ -99,7 +101,19 @@ const CitySectionSkeleton = () => {
 };
 
 const CitySection = () => {
+  const router = useRouter();
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
+
+  const handleCityClick = (cityName: string) => {
+    setSelectedCity(cityName);
+    if (window.location.pathname === "/") {
+      document
+        .getElementById("hero-search")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      router.push("/#hero-search");
+    }
+  };
 
   const {
     data: apiResponse,
@@ -225,7 +239,28 @@ const CitySection = () => {
                             return (
                               <div
                                 key={city.name}
-                                className="flex flex-col gap-1 py-2.5 px-3 rounded-xl bg-white border border-gray-100/50 shadow-2xs"
+                                role={isComingSoon ? undefined : "button"}
+                                tabIndex={isComingSoon ? undefined : 0}
+                                onClick={
+                                  isComingSoon
+                                    ? undefined
+                                    : () => handleCityClick(city.name)
+                                }
+                                onKeyDown={
+                                  isComingSoon
+                                    ? undefined
+                                    : (e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                          e.preventDefault();
+                                          handleCityClick(city.name);
+                                        }
+                                      }
+                                }
+                                className={`flex flex-col gap-1 py-2.5 px-3 rounded-xl bg-white border border-gray-100/50 shadow-2xs ${
+                                  isComingSoon
+                                    ? ""
+                                    : "cursor-pointer transition-colors hover:border-primary/40 hover:bg-primary/5"
+                                }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <span
