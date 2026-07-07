@@ -10,10 +10,9 @@ interface BannerProps {
 }
 
 const Banner = ({ title, description, banner }: BannerProps) => {
-  const bannerImage =
-    Array.isArray(banner) && banner.length > 0
-      ? banner[0]
-      : banner || "/placeholder.png";
+  const bannerImage = Array.isArray(banner)
+    ? banner[0] || "/placeholder.png"
+    : banner || "/placeholder.png";
 
   const secondImage =
     Array.isArray(banner) && banner.length > 1 ? banner[1] : bannerImage;

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { FindJobDataTypes } from "../find-job-data-type";
+import { isSameLocationName, normalizeLocationName } from "@/lib/utils";
 
 interface Country {
   _id: string;
@@ -47,7 +48,7 @@ export function LocationStep({ data, onNext, onBack }: LocationStepProps) {
   // Get unique countries
   const uniqueCountries = countriesData
     ? Array.from(
-        new Map(countriesData.map((item) => [item.countryName, item])).values(),
+        new Map(countriesData.map((item) => [normalizeLocationName(item.countryName), item])).values(),
       )
     : [];
 
@@ -55,7 +56,7 @@ export function LocationStep({ data, onNext, onBack }: LocationStepProps) {
     if (!countriesData) return [];
 
     const cities = countriesData
-      .filter((item) => item.countryName === countryName)
+      .filter((item) => isSameLocationName(item.countryName, countryName))
       .flatMap((item) => {
         if (item.cities?.length) {
           return item.cities.map((city) => city.cityName);
@@ -71,12 +72,29 @@ export function LocationStep({ data, onNext, onBack }: LocationStepProps) {
     return Array.from(new Set(cities));
   }, [countriesData]);
 
+  // Reconcile the saved country (which may be an older/differently-cased
+  // value) with the canonical casing from the Country list, so the <select>
+  // can actually match and display it as selected.
+  useEffect(() => {
+    if (!countriesData || !selectedCountry) return;
+    const canonicalCountry = countriesData.find((c) =>
+      isSameLocationName(c.countryName, selectedCountry),
+    );
+    if (canonicalCountry && canonicalCountry.countryName !== selectedCountry) {
+      setSelectedCountry(canonicalCountry.countryName);
+    }
+  }, [countriesData, selectedCountry]);
+
   // Update cities when country changes
   useEffect(() => {
     if (selectedCountry && countriesData) {
       const cities = getCitiesForCountry(selectedCountry);
       setAvailableCities(cities);
-      setSelectedCity((current) => (current && cities.includes(current) ? current : ""));
+      setSelectedCity((current) => {
+        if (!current) return "";
+        const canonicalCity = cities.find((c) => isSameLocationName(c, current));
+        return canonicalCity ?? "";
+      });
       setCustomCity((current) => (current ? current : ""));
     } else {
       setAvailableCities([]);

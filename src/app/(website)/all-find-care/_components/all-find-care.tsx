@@ -60,7 +60,10 @@ interface Category {
   name: string;
   description: string;
   banner: string[];
-  logo: string;
+  logo?: string;
+  // Raw field name returned by GET /category/:id (the aggregated
+  // service-base-user endpoint renames this to `logo`).
+  image?: string;
 }
 
 interface ServiceBaseUser {
@@ -145,6 +148,23 @@ const AllFindCare = () => {
     enabled: !!id,
   });
 
+  // Fetched directly so the banner (title/description/images) still shows
+  // even when this category currently has zero matching caregivers.
+  const { data: categoryResponse, isLoading: isCategoryLoading } = useQuery<{
+    data: Category;
+  }>({
+    queryKey: ["category", id],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/category/${id}`);
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.message || "Failed to fetch category");
+      }
+      return json;
+    },
+    enabled: !!id,
+  });
+
   const caregivers = data?.data || [];
   const getDisplayLocation = (caregiver: ServiceBaseUser) =>
     caregiver.location ||
@@ -202,7 +222,7 @@ const AllFindCare = () => {
             <span className="font-semibold">
               {totalCaregivers.toLocaleString()}
             </span>{" "}
-            {data?.data[0]?.category?.name?.toLowerCase() || "caregivers"} are
+            {categoryResponse?.data?.name?.toLowerCase() || "caregivers"} are
             listed on This platform
           </span>
         ),
@@ -238,9 +258,9 @@ const AllFindCare = () => {
         ),
       },
     ];
-  }, [caregivers, data]);
+  }, [caregivers, categoryResponse]);
 
-  const categoryData = caregivers[0]?.category;
+  const categoryData = categoryResponse?.data;
 
   const generateTags = (caregiver: ServiceBaseUser) => {
     const tags = [];
@@ -266,13 +286,19 @@ const AllFindCare = () => {
   return (
     <div className="space-y-16 mb-20">
       {/* Show Banner Skeleton while loading, otherwise show dynamic Banner */}
-      {isLoading ? (
+      {isLoading || isCategoryLoading ? (
         <BannerSkeleton />
       ) : (
         <Banner
           title={categoryData?.name}
           description={categoryData?.description}
-          banner={categoryData?.banner}
+          banner={
+            categoryData?.banner?.length
+              ? categoryData.banner
+              : categoryData?.logo || categoryData?.image
+                ? [(categoryData.logo || categoryData.image) as string]
+                : undefined
+          }
         />
       )}
 

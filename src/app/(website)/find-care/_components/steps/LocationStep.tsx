@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import { isSameLocationName, normalizeLocationName } from "@/lib/utils";
 
 interface Country {
   _id: string;
@@ -55,17 +56,17 @@ export function LocationStep({
 
   // Get unique countries
   const uniqueCountries = countriesData
-    ? Array.from(new Map(countriesData.map(item => [item.countryName, item])).values())
+    ? Array.from(new Map(countriesData.map(item => [normalizeLocationName(item.countryName), item])).values())
     : [];
 
   // Helper function to get cities with their neighborhoods
   const getCityNeighborhoods = useCallback((countryName: string, cityName: string): string[] => {
-    const country = countriesData?.find((c) => c.countryName === countryName);
+    const country = countriesData?.find((c) => isSameLocationName(c.countryName, countryName));
     if (!country) return [];
 
     // New API format with cities array containing neighborhoods
     if (country.cities && country.cities.length > 0) {
-      const city = country.cities.find((c) => c.cityName === cityName);
+      const city = country.cities.find((c) => isSameLocationName(c.cityName, cityName));
       return city?.neighborhoods || [];
     }
 
@@ -73,10 +74,23 @@ export function LocationStep({
     return [];
   }, [countriesData]);
 
+  // Reconcile the saved country (which may be an older/differently-cased
+  // value) with the canonical casing from the Country list, so the <select>
+  // can actually match and display it as selected.
+  useEffect(() => {
+    if (!countriesData || !selectedCountry) return;
+    const canonicalCountry = countriesData.find((c) =>
+      isSameLocationName(c.countryName, selectedCountry),
+    );
+    if (canonicalCountry && canonicalCountry.countryName !== selectedCountry) {
+      setSelectedCountry(canonicalCountry.countryName);
+    }
+  }, [countriesData, selectedCountry]);
+
   // Update cities when country changes
   useEffect(() => {
     if (selectedCountry && countriesData) {
-      const country = countriesData.find((c) => c.countryName === selectedCountry);
+      const country = countriesData.find((c) => isSameLocationName(c.countryName, selectedCountry));
       let cities: string[] = [];
 
       if (country?.cities && country.cities.length > 0) {
@@ -88,7 +102,11 @@ export function LocationStep({
       }
 
       setAvailableCities(cities);
-      setSelectedCity((current) => (current && cities.includes(current) ? current : ""));
+      setSelectedCity((current) => {
+        if (!current) return "";
+        const canonicalCity = cities.find((c) => isSameLocationName(c, current));
+        return canonicalCity ?? "";
+      });
       setCustomCity((current) => (current ? current : ""));
       setSelectedNeighborhood((current) => (current ? current : ""));
     } else {
@@ -110,14 +128,20 @@ export function LocationStep({
 
   // Set initial values if provided
   useEffect(() => {
-    if (initialCity && availableCities.includes(initialCity)) {
-      setSelectedCity(initialCity);
+    if (!initialCity) return;
+    const canonicalCity = availableCities.find((c) => isSameLocationName(c, initialCity));
+    if (canonicalCity) {
+      setSelectedCity(canonicalCity);
     }
   }, [initialCity, availableCities]);
 
   useEffect(() => {
-    if (initialNeighborhood && availableNeighborhoods.includes(initialNeighborhood)) {
-      setSelectedNeighborhood(initialNeighborhood);
+    if (!initialNeighborhood) return;
+    const canonicalNeighborhood = availableNeighborhoods.find((n) =>
+      isSameLocationName(n, initialNeighborhood),
+    );
+    if (canonicalNeighborhood) {
+      setSelectedNeighborhood(canonicalNeighborhood);
     }
   }, [initialNeighborhood, availableNeighborhoods]);
 

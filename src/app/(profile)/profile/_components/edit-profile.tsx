@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Form } from "@/components/ui/form";
+import { isSameLocationName, normalizeLocationName } from "@/lib/utils";
 
 const profileSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -210,12 +211,16 @@ const EditProfilePage = () => {
     countryName: string,
     cityName: string,
   ): string[] => {
-    const country = countries.find((c) => c.countryName === countryName);
+    const country = countries.find((c) =>
+      isSameLocationName(c.countryName, countryName),
+    );
     if (!country) return [];
 
     // New API format with cities array containing neighborhoods
     if (country.cities && country.cities.length > 0) {
-      const city = country.cities.find((c) => c.cityName === cityName);
+      const city = country.cities.find((c) =>
+        isSameLocationName(c.cityName, cityName),
+      );
       return city?.neighborhoods || [];
     }
 
@@ -227,7 +232,7 @@ const EditProfilePage = () => {
   const updateCities = (countryName: string) => {
     if (countryName && countries) {
       const cities = countries
-        .filter((country) => country.countryName === countryName)
+        .filter((country) => isSameLocationName(country.countryName, countryName))
         .flatMap((country) => {
           if (country.cities?.length) {
             return country.cities.map((item) => item.cityName);
@@ -254,7 +259,7 @@ const EditProfilePage = () => {
       if (
         currentNeighborhood &&
         neighborhoods.length > 0 &&
-        !neighborhoods.includes(currentNeighborhood)
+        !neighborhoods.some((n) => isSameLocationName(n, currentNeighborhood))
       ) {
         form.setValue("neighborhoods", "");
       }
@@ -293,6 +298,31 @@ const EditProfilePage = () => {
       updateNeighborhoods(countryValue, cityValue);
     }
   }, [countries, countryValue, cityValue]);
+
+  // Reconcile a saved country/city value (which may be an older, differently
+  // cased/free-typed value) with the canonical casing from the Country list,
+  // so the <select> can actually match it and show it as selected.
+  useEffect(() => {
+    if (!countries.length || !countryValue) return;
+    const canonicalCountry = countries.find((c) =>
+      isSameLocationName(c.countryName, countryValue),
+    );
+    if (canonicalCountry && canonicalCountry.countryName !== countryValue) {
+      setCountryValue(canonicalCountry.countryName);
+      form.setValue("country", canonicalCountry.countryName);
+    }
+  }, [countries]);
+
+  useEffect(() => {
+    if (!availableCities.length || !cityValue) return;
+    const canonicalCity = availableCities.find((c) =>
+      isSameLocationName(c, cityValue),
+    );
+    if (canonicalCity && canonicalCity !== cityValue) {
+      setCityValue(canonicalCity);
+      form.setValue("city", canonicalCity);
+    }
+  }, [availableCities]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -606,7 +636,9 @@ const EditProfilePage = () => {
 
   const uniqueCountries = countries
     ? Array.from(
-        new Map(countries.map((item) => [item.countryName, item])).values(),
+        new Map(
+          countries.map((item) => [normalizeLocationName(item.countryName), item]),
+        ).values(),
       )
     : [];
   const selectedMainPhotoUrl = selectedMainPhoto.startsWith("existing:")
