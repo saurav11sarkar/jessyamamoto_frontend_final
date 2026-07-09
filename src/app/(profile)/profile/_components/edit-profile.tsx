@@ -666,7 +666,7 @@ const EditProfilePage = () => {
             </div>
           </div>
 
-          {/* Subscription Status Section */}
+          {/* Membership Status Section */}
           <div
             className={`mb-6 rounded-xl border p-5 ${
               subscriptionInfo.isActive
@@ -726,7 +726,7 @@ const EditProfilePage = () => {
                       ? `Expires on ${subscriptionInfo.expiry} — Booking fee: 12.5%`
                       : subscriptionInfo.isExpired
                         ? `Expired on ${subscriptionInfo.expiry} — Booking fee: 25%`
-                        : "Subscribe to get reduced 12.5% booking fee"}
+                        : "Become a member to get a reduced 12.5% booking fee"}
                   </p>
                 </div>
               </div>
@@ -739,7 +739,9 @@ const EditProfilePage = () => {
                       : "bg-primary text-white hover:bg-primary/90"
                   }`}
                 >
-                  {subscriptionInfo.isExpired ? "Renew" : "Subscribe"}
+                  {subscriptionInfo.isExpired
+                    ? "Renew Membership"
+                    : "Become a Member"}
                 </a>
               )}
             </div>

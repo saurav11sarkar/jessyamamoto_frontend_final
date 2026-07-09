@@ -118,6 +118,14 @@ export default function Categories() {
 
   // Get user's categories
   const userCategories = userProfile?.category || [];
+  const activeSubscriptionId =
+    userProfile?.isSubscription === true &&
+    userProfile?.subscriptionExpiry &&
+    new Date(userProfile.subscriptionExpiry) > new Date()
+      ? typeof userProfile.subscription === "object"
+        ? userProfile.subscription?._id || ""
+        : userProfile.subscription || ""
+      : "";
 
   const handleCategoryClick = (category: Category) => {
     if (session?.user?.role === "find job" && token && userProfile) {
@@ -143,7 +151,7 @@ export default function Categories() {
                 ...(userProfile.hourRate && userProfile.hourRate > 0
                   ? { hourRate: userProfile.hourRate }
                   : {}),
-                subscriptionId: userProfile.subscription || "",
+                subscriptionId: activeSubscriptionId,
               }),
             },
           );

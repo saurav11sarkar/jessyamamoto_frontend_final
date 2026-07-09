@@ -10,11 +10,18 @@ import { useRouter } from "next/navigation";
 
 type SubscriptionPlan = {
   _id: string;
-  type: "monthly" | "yearly";
+  type: "monthly" | "6month" | "yearly" | "annual" | string;
   title: string;
   price: number;
   description: string;
   content: string;
+};
+
+const planPeriod: Record<string, string> = {
+  monthly: "/month",
+  "6month": "/6 months",
+  yearly: "/year",
+  annual: "/year",
 };
 
 interface PricingStepProps {
@@ -90,7 +97,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
             Error Loading Plans
           </h2>
           <p className="text-gray-600 mb-6">
-            Failed to load subscription plans. Please try again later.
+            Failed to load membership plans. Please try again later.
           </p>
           <div className="flex gap-3 justify-center">
             <Button
@@ -116,12 +123,12 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="max-w-6xl mx-auto w-full">
         <h1 className="text-3xl text-[#0A0A23] font-bold text-center mb-10">
-          Almost done! Choose your plan.
+          Almost done! Choose your JetSet Cares membership.
         </h1>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-10 max-w-[700px] mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 mb-10 max-w-5xl mx-auto">
           {isLoading
-            ? Array.from({ length: 2 }).map((_, i) => (
+            ? Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
                   className="p-6 rounded-lg border-2 border-gray-200 bg-white animate-pulse"
@@ -142,7 +149,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
               ))
             : plans.map((plan) => {
                 const isSelected = selectedPlanId === plan._id;
-                const isYearly = plan.type === "yearly";
+                const isPopular = plan.type === "6month";
 
                 return (
                   <div
@@ -156,7 +163,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
                         : "border-gray-300 hover:border-gray-400 hover:shadow-md"
                     } ${mutation.isPending ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    {isSelected && isYearly && (
+                    {isSelected && isPopular && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
                         <span className="bg-primary text-white px-4 py-1.5 rounded-full text-sm font-semibold">
                           Most Popular
@@ -174,7 +181,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
                         ${plan.price.toFixed(2)}
                       </span>
                       <span className="text-gray-600 ml-1">
-                        {isYearly ? "/year" : "/month"}
+                        {planPeriod[plan.type] || ""}
                       </span>
                     </div>
 
@@ -207,7 +214,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
                         }
                       }}
                     >
-                      {isSelected ? "Selected" : "Select Plan"}
+                      {isSelected ? "Selected" : "Select Membership"}
                     </Button>
                   </div>
                 );
@@ -235,7 +242,7 @@ export function PricingStep({ data, onBack, onSubmit }: PricingStepProps) {
                   Processing...
                 </>
               ) : (
-                "Continue with Selected Plan"
+                "Continue with Selected Membership"
               )}
             </Button>
           </div>

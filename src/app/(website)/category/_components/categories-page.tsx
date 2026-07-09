@@ -62,6 +62,15 @@ export default function CategoriesPage() {
   const isCategoryDisabled = (id: string) =>
     userProfile?.category?.includes(id);
 
+  const activeSubscriptionId =
+    userProfile?.isSubscription === true &&
+    userProfile?.subscriptionExpiry &&
+    new Date(userProfile.subscriptionExpiry) > new Date()
+      ? typeof userProfile.subscription === "object"
+        ? userProfile.subscription?._id || ""
+        : userProfile.subscription || ""
+      : "";
+
   const handleCategoryClick = async (category: Category) => {
     if (!session || !token) {
       router.push(`/login?callbackUrl=${encodeURIComponent("/category")}`);
@@ -92,7 +101,7 @@ export default function CategoriesPage() {
             ...(userProfile.hourRate && userProfile.hourRate > 0
               ? { hourRate: userProfile.hourRate }
               : {}),
-            subscriptionId: userProfile.subscription || "",
+            subscriptionId: activeSubscriptionId,
           }),
         },
       );

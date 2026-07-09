@@ -48,18 +48,21 @@ const typeOrder: Record<string, number> = {
   monthly: 1,
   "6month": 2,
   yearly: 3,
+  annual: 3,
 };
 
 const typeLabel: Record<string, string> = {
   monthly: "Monthly",
   "6month": "6 Month",
   yearly: "Annual",
+  annual: "Annual",
 };
 
 const typePeriod: Record<string, string> = {
   monthly: "/month",
   "6month": "/6 months",
   yearly: "/year",
+  annual: "/year",
 };
 
 const planAccent: Record<string, string> = {
@@ -126,7 +129,7 @@ export default function MembershipPage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/subscription?limit=50`,
       );
-      if (!res.ok) throw new Error("Failed to fetch subscription plans");
+      if (!res.ok) throw new Error("Failed to fetch membership plans");
       return res.json();
     },
   });
@@ -144,8 +147,8 @@ export default function MembershipPage() {
       return;
     }
 
-    if (isActive) {
-      toast.error("You already have an active subscription.");
+    if (isActive && activeSubscriptionId === planId) {
+      toast.error("This membership is already active.");
       return;
     }
 
@@ -167,13 +170,13 @@ export default function MembershipPage() {
       const result = await res.json();
 
       if (!res.ok) {
-        throw new Error(result?.message || "Subscription failed");
+        throw new Error(result?.message || "Membership purchase failed");
       }
 
       if (result?.data?.checkoutUrl) {
         window.location.href = result.data.checkoutUrl;
       } else {
-        toast.success("Subscription activated successfully!");
+        toast.success("Membership activated successfully!");
       }
     } catch (error) {
       const message =
@@ -307,7 +310,7 @@ export default function MembershipPage() {
         <div className="container mx-auto max-w-5xl">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="rounded-[28px] border border-slate-200 bg-white/90 p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
-              <h3 className="mb-2 text-xl font-semibold text-slate-700">
+                <h3 className="mb-2 text-xl font-semibold text-slate-700">
                 Non Member
               </h3>
               <p className="mb-4 text-5xl font-bold text-slate-400">25%</p>
@@ -339,6 +342,8 @@ export default function MembershipPage() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {plans.map((plan) => {
                 const isPopular = plan.type === "6month";
+                const isCurrentPlan =
+                  isActive && activeSubscriptionId === plan._id;
                 const features = plan.content
                   .split(",")
                   .map((f) => f.trim())
@@ -410,7 +415,7 @@ export default function MembershipPage() {
                     </div>
 
                     <div className="mt-auto">
-                      {isActive && activeSubscriptionId === plan._id ? (
+                      {isCurrentPlan ? (
                         <button
                           disabled
                           className="flex w-full cursor-not-allowed items-center justify-center rounded-2xl bg-green-100 px-6 py-3.5 text-sm font-semibold text-green-700"
@@ -420,7 +425,7 @@ export default function MembershipPage() {
                       ) : (
                         <button
                           onClick={() => handleSubscribe(plan._id)}
-                          disabled={isActive || loadingPlanId === plan._id}
+                          disabled={loadingPlanId === plan._id}
                           className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                             isPopular
                               ? "bg-primary text-white hover:bg-primary/90"
@@ -430,10 +435,10 @@ export default function MembershipPage() {
                           {loadingPlanId === plan._id
                             ? "Processing..."
                             : isActive
-                              ? "Active Plan"
+                              ? "Change Membership"
                               : isExpired
-                                ? "Renew"
-                                : "Subscribe"}
+                                ? "Renew Membership"
+                                : "Become a Member"}
                           {loadingPlanId !== plan._id && (
                             <ArrowRight className="h-4 w-4" />
                           )}
@@ -456,7 +461,7 @@ export default function MembershipPage() {
         <section className="border-t bg-white/70 px-4 py-12 backdrop-blur">
           <div className="container mx-auto max-w-3xl rounded-[28px] border border-slate-200 bg-slate-50/80 px-6 py-8 text-center shadow-[0_16px_50px_rgba(15,23,42,0.05)] sm:px-8">
             <h3 className="mb-2 text-xl font-semibold text-slate-800">
-              Your Subscription
+              Your Membership
             </h3>
             {isActive ? (
               <p className="text-slate-600">
@@ -475,8 +480,8 @@ export default function MembershipPage() {
               </p>
             ) : (
               <p className="text-slate-600">
-                You don&apos;t have an active subscription yet. Subscribe to a
-                plan above to enjoy reduced 12.5% booking fees instead of 25%.
+                You don&apos;t have an active membership yet. Become a member
+                above to enjoy reduced 12.5% booking fees instead of 25%.
               </p>
             )}
           </div>

@@ -5,65 +5,81 @@ import { Shield, Star, Heart, Clock } from "lucide-react";
 import Link from "next/link";
 
 const ProviderSection = () => {
+  const trustItems = [
+    {
+      label: "Family Recommended",
+      description: "Trusted by families already receiving care.",
+      Icon: Star,
+    },
+    {
+      label: "ID Verified",
+      description: "Profiles are reviewed before going live.",
+      Icon: Shield,
+    },
+    {
+      label: "Background Checked",
+      description: "Built around safety and professional standards.",
+      Icon: Heart,
+    },
+    {
+      label: "Reliable and Responsive",
+      description: "Clear communication families can count on.",
+      Icon: Clock,
+    },
+  ];
+
   return (
-    <section className="py-24 bg-white">
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-[#0A2B3E] mb-4">
-          Become a JetSet Care Partner
-        </h2>
+    <section className="bg-[#FDF7F4] py-14 sm:py-16 lg:py-20">
+      <div className="container mx-auto px-4">
+        <div className="grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">
+            <span className="inline-flex rounded-full border border-[#40E0D0]/30 bg-white px-4 py-2 text-sm font-semibold text-[#238F86] shadow-sm">
+              Partner with JetSet Cares
+            </span>
 
-        <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-          JetSet Cares is for trusted childcare and pet care professionals who
-          are warm, reliable, well presented, responsive and recommended by the
-          families they already support. Whether you care for children, pets, or
-          both, we want partners who come with real experience, real references,
-          and real trust from the families and little ones already in their
-          care. If you want to grow with a platform built on safety,
-          professionalism, and strong family experiences, we would love to
-          welcome you as a JetSet Care Partner.
-        </p>
+            <h2 className="mt-5 text-3xl font-bold leading-tight text-[#0A2B3E] sm:text-4xl lg:text-5xl">
+              Become a JetSet Care Partner
+            </h2>
 
-        {/* ট্রাস্ট ব্যাজেস */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mb-10">
-          <div className="text-center">
-            <div className="w-12 h-12 bg-[#40E0D0]/10 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Star className="w-6 h-6 text-[#40E0D0]" />
+            <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
+              JetSet Cares welcomes trusted childcare and pet care
+              professionals who are warm, reliable, well presented, responsive,
+              and recommended by the families they already support.
+            </p>
+
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              If you bring real experience, references, and care families can
+              trust, we would love to help you grow with a platform built on
+              safety, professionalism, and strong family experiences.
+            </p>
+
+            <div className="mt-8">
+              <Link href="/signup">
+                <Button className="h-12 rounded-full bg-[#40E0D0] px-8 text-sm font-bold text-slate-950 shadow-[0_14px_30px_rgba(64,224,208,0.28)] transition-all hover:-translate-y-0.5 hover:bg-[#2CB0A0]">
+                  Apply as a JetSet Care Partner
+                </Button>
+              </Link>
             </div>
-            <p className="text-sm font-medium">Family Recommended</p>
-          </div>
-          <div className="text-center">
-            <div className="w-12 h-12 bg-[#40E0D0]/10 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Shield className="w-6 h-6 text-[#40E0D0]" />
-            </div>
-            <p className="text-sm font-medium">ID Verified</p>
           </div>
 
-          <div className="text-center">
-            <div className="w-12 h-12 bg-[#40E0D0]/10 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Heart className="w-6 h-6 text-[#40E0D0]" />
-            </div>
-            <p className="text-sm font-medium">Background Checked</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {trustItems.map(({ label, description, Icon }) => (
+              <div
+                key={label}
+                className="rounded-2xl border border-[#E8DDD8] bg-white/90 p-5 shadow-[0_14px_40px_rgba(15,23,42,0.06)]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#40E0D0]/12 text-[#238F86]">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-5 text-base font-bold text-slate-900">
+                  {label}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {description}
+                </p>
+              </div>
+            ))}
           </div>
-          <div className="text-center">
-            <div className="w-12 h-12 bg-[#40E0D0]/10 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Clock className="w-6 h-6 text-[#40E0D0]" />
-            </div>
-            <p className="text-sm font-medium">Reliable and Responsive</p>
-          </div>
-        </div>
-
-        <div className="hidden sm:block">
-          <Link href={`/signup`}>
-            <Button className="rounded-full px-8 h-12 bg-[#40E0D0] hover:bg-[#2CB0A0] text-black">
-              Apply as a JetSet Care Partner
-            </Button>
-          </Link>
-        </div>
-
-        <div className="block sm:hidden">
-          <Button className="rounded-full px-8 h-12 bg-[#40E0D0] hover:bg-[#2CB0A0] text-black">
-            Become a JetSet Care Partner
-          </Button>
         </div>
       </div>
     </section>

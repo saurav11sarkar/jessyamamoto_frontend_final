@@ -54,9 +54,9 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="overflow-hidden bg-[#3ee0cf] pt-16 text-slate-900">
+    <footer className="overflow-hidden bg-[#FDF7F4] pt-10 text-slate-900">
       <div className="container">
-        <div className="mb-10 rounded-[32px] border border-white/40 bg-white/25 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-sm md:p-8">
+        <div className="mb-8 rounded-2xl border border-[#E8DDD8] bg-[#F8FEFE]/90 p-6 shadow-[0_14px_44px_rgba(15,23,42,0.06)] backdrop-blur-sm md:p-7">
           <div className="grid gap-10 lg:grid-cols-5">
             <div>
               <h4 className="mb-5 text-lg font-bold text-slate-900">
@@ -141,7 +141,7 @@ const Footer = () => {
                         item.href.startsWith("http") ? "noreferrer" : undefined
                       }
                       aria-label={item.label}
-                      className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-400/70 bg-white/45 text-slate-800 transition-all hover:-translate-y-0.5 hover:bg-white/70"
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-[#40E0D0]/35 bg-white text-slate-800 transition-all hover:-translate-y-0.5 hover:border-[#40E0D0] hover:bg-[#40E0D0]/10"
                     >
                       <item.Icon size={18} strokeWidth={1.8} />
                     </a>
@@ -151,8 +151,8 @@ const Footer = () => {
             </div>
 
             <div className="space-y-4 pt-2">
-              <div className="flex items-start gap-3 rounded-2xl bg-white/35 p-4">
-                <Mail className="mt-0.5 h-5 w-5 text-slate-900" />
+              <div className="flex items-start gap-3 rounded-xl border border-[#E8DDD8] bg-white/80 p-4">
+                <Mail className="mt-0.5 h-5 w-5 text-[#40AFA6]" />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
                     Email
@@ -166,8 +166,8 @@ const Footer = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-2xl bg-white/35 p-4">
-                <Phone className="mt-0.5 h-5 w-5 text-slate-900" />
+              <div className="flex items-start gap-3 rounded-xl border border-[#E8DDD8] bg-white/80 p-4">
+                <Phone className="mt-0.5 h-5 w-5 text-[#40AFA6]" />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
                     Office Phone
@@ -181,8 +181,8 @@ const Footer = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-2xl bg-white/35 p-4">
-                <MapPin className="mt-0.5 h-5 w-5 text-slate-900" />
+              <div className="flex items-start gap-3 rounded-xl border border-[#E8DDD8] bg-white/80 p-4">
+                <MapPin className="mt-0.5 h-5 w-5 text-[#40AFA6]" />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
                     Social
@@ -201,7 +201,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-slate-500/35 py-6 text-center">
+        <div className="border-t border-[#E8DDD8] py-5 text-center">
           <p className="text-sm text-slate-800">
             {new Date().getFullYear()} JetSet Cares. All rights reserved.
           </p>

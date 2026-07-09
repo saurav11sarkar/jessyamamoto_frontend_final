@@ -9,11 +9,18 @@ import { Check, Loader2 } from "lucide-react";
 
 type SubscriptionPlan = {
   _id: string;
-  type: "monthly" | "yearly";
+  type: "monthly" | "6month" | "yearly" | "annual" | string;
   title: string;
   price: number;
   description: string;
   content: string;
+};
+
+const planPeriod: Record<string, string> = {
+  monthly: "/month",
+  "6month": "/6 months",
+  yearly: "/year",
+  annual: "/year",
 };
 
 interface PricingStepProps {
@@ -76,7 +83,7 @@ export function PricingStep({
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="text-center text-red-600 py-10 bg-white rounded-lg p-8 max-w-md">
-          Failed to load subscription plans. Please try again later.
+          Failed to load membership plans. Please try again later.
           <Button
             onClick={onBack}
             className="mt-4 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-full"
@@ -92,12 +99,12 @@ export function PricingStep({
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="max-w-6xl mx-auto w-full">
         <h1 className="text-3xl text-[#0A0A23] font-bold text-center mb-10">
-          Almost done! Order your safety screening to find jobs.
+          Almost done! Choose your JetSet Cares membership.
         </h1>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-10 max-w-[700px] mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 mb-10 max-w-5xl mx-auto">
           {isLoading
-            ? Array.from({ length: 2 }).map((_, i) => (
+            ? Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
                   className="p-6 rounded-lg border-2 border-gray-200 bg-white animate-pulse"
@@ -118,7 +125,7 @@ export function PricingStep({
               ))
             : plans.map((plan) => {
                 const isSelected = selectedPlanId === plan._id;
-                const isYearly = plan.type === "yearly";
+                const isPopular = plan.type === "6month";
 
                 return (
                   <div
@@ -130,7 +137,7 @@ export function PricingStep({
                         : "border-gray-300 hover:border-gray-400 hover:shadow-md"
                     } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    {isSelected && isYearly && (
+                    {isSelected && isPopular && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                         <span className="bg-primary text-white px-4 py-1.5 rounded-full text-sm font-semibold">
                           Most Popular
@@ -148,7 +155,7 @@ export function PricingStep({
                         ${plan.price.toFixed(2)}
                       </span>
                       <span className="text-gray-600 ml-1">
-                        {isYearly ? "/year" : "/month"}
+                        {planPeriod[plan.type] || ""}
                       </span>
                     </div>
 
@@ -182,7 +189,7 @@ export function PricingStep({
                         }
                       }}
                     >
-                      {isSelected ? "Selected" : "Select Plan"}
+                      {isSelected ? "Selected" : "Select Membership"}
                     </Button>
                   </div>
                 );
@@ -210,7 +217,7 @@ export function PricingStep({
                   Processing...
                 </>
               ) : (
-                "Continue with Selected Plan"
+                "Continue with Selected Membership"
               )}
             </Button>
           </div>
