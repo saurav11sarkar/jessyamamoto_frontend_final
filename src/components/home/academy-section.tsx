@@ -2,6 +2,7 @@
 import React, { useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { BookOpen, Award, Globe, Play, Pause } from "lucide-react";
+import Link from "next/link";
 
 const AcademySection = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -48,9 +49,16 @@ const AcademySection = () => {
               and prepare more thoughtfully for life across borders.
             </p>
 
-            <Button className="rounded-full h-12 px-10 bg-[#7C3AED] hover:bg-[#6D28D9] text-white transition-all shadow-lg hover:shadow-purple-200">
-              Coming Soon
-            </Button>
+            <div>
+              <Link
+                href={`https://www.youtube.com/@JetSetCares`}
+                target="_blank"
+              >
+                <Button className="rounded-full h-12 px-10 bg-[#7C3AED] hover:bg-[#6D28D9] text-white transition-all shadow-lg hover:shadow-purple-200">
+                  Coming Soon
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Right Side Video & Badges */}
