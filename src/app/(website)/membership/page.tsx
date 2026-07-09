@@ -45,6 +45,7 @@ interface UserProfile {
 }
 
 const typeOrder: Record<string, number> = {
+  free: 0,
   monthly: 1,
   "6month": 2,
   yearly: 3,
@@ -52,6 +53,7 @@ const typeOrder: Record<string, number> = {
 };
 
 const typeLabel: Record<string, string> = {
+  free: "Free",
   monthly: "Monthly",
   "6month": "6 Month",
   yearly: "Annual",
@@ -59,6 +61,7 @@ const typeLabel: Record<string, string> = {
 };
 
 const typePeriod: Record<string, string> = {
+  free: "forever",
   monthly: "/month",
   "6month": "/6 months",
   yearly: "/year",
@@ -66,6 +69,8 @@ const typePeriod: Record<string, string> = {
 };
 
 const planAccent: Record<string, string> = {
+  free:
+    "border-slate-200 bg-white/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)]",
   monthly:
     "border-slate-200 bg-white/90 shadow-[0_18px_50px_rgba(15,23,42,0.08)]",
   "6month":
@@ -75,9 +80,22 @@ const planAccent: Record<string, string> = {
 };
 
 const planPill: Record<string, string> = {
+  free: "bg-slate-100 text-slate-700",
   monthly: "bg-slate-100 text-slate-700",
   "6month": "bg-primary text-white",
   yearly: "bg-emerald-100 text-emerald-700",
+  annual: "bg-emerald-100 text-emerald-700",
+};
+
+const freeMembershipPlan: Subscription = {
+  _id: "free",
+  type: "free",
+  title: "Free Membership",
+  price: 0,
+  description:
+    "Create a JetSet Cares account, explore care options, and book without paid member savings.",
+  content:
+    "Free account access, Browse trusted care profiles, Standard Trusted Booking Fee applies, Upgrade anytime for member savings",
 };
 
 export default function MembershipPage() {
@@ -135,13 +153,22 @@ export default function MembershipPage() {
   });
 
   const plans = React.useMemo(() => {
-    if (!data?.data) return [];
-    return [...data.data].sort(
+    const paidPlans = data?.data || [];
+    return [freeMembershipPlan, ...paidPlans].sort(
       (a, b) => (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99),
     );
   }, [data]);
 
   const handleSubscribe = async (planId: string) => {
+    if (planId === "free") {
+      if (!session) {
+        router.push("/signup");
+        return;
+      }
+      toast.success("You are already on the Free Membership option.");
+      return;
+    }
+
     if (!session) {
       router.push("/login");
       return;
@@ -197,33 +224,33 @@ export default function MembershipPage() {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
                   <Sparkles className="h-4 w-4" />
-                  Better rates for every family booking
+                  Become a Member
                 </div>
                 <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-                  Membership that feels premium, and saves you on every booking.
+                  Choose the JetSet Cares membership that fits your family.
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Join JetSet Cares to unlock reduced Trusted Booking Fees,
+                  Start free, then upgrade when you want member savings,
                   priority-ready support, and a smoother way to arrange trusted
                   care while traveling.
                 </p>
 
                 <div className="mt-8 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                    <p className="text-sm text-slate-500">Member fee</p>
+                    <p className="text-sm text-slate-500">Free membership</p>
+                    <p className="mt-2 text-3xl font-bold text-slate-900">
+                      $0
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                    <p className="text-sm text-slate-500">Paid member fee</p>
                     <p className="mt-2 text-3xl font-bold text-slate-900">
                       12.5%
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                    <p className="text-sm text-slate-500">Non member fee</p>
-                    <p className="mt-2 text-3xl font-bold text-slate-900">
-                      25%
-                    </p>
-                  </div>
                   <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                    <p className="text-sm text-slate-500">You save</p>
-                    <p className="mt-2 text-3xl font-bold text-primary">50%</p>
+                    <p className="text-sm text-slate-500">Plan options</p>
+                    <p className="mt-2 text-3xl font-bold text-primary">4</p>
                   </div>
                 </div>
               </div>
@@ -246,7 +273,7 @@ export default function MembershipPage() {
                 <div className="mt-8 space-y-4">
                   {[
                     "Reduced Trusted Booking Fees on every eligible booking",
-                    "Simple plan choices for monthly, 6 month, or annual savings",
+                    "Clear choices from free to monthly, 6 month, and annual",
                     "A more polished member experience from search to checkout",
                   ].map((item) => (
                     <div
@@ -307,24 +334,14 @@ export default function MembershipPage() {
       )}
 
       <section className="px-4 pb-10 sm:pb-12">
-        <div className="container mx-auto max-w-5xl">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="rounded-[28px] border border-slate-200 bg-white/90 p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
-                <h3 className="mb-2 text-xl font-semibold text-slate-700">
-                Non Member
-              </h3>
-              <p className="mb-4 text-5xl font-bold text-slate-400">25%</p>
-              <p className="text-slate-500">Trusted Booking Fee</p>
-            </div>
-
-            <div className="rounded-[28px] border border-primary/30 bg-gradient-to-br from-primary/10 via-white to-primary/5 p-8 text-center shadow-[0_20px_60px_rgba(14,165,233,0.16)]">
-              <h3 className="mb-2 text-xl font-semibold text-primary">
-                Member
-              </h3>
-              <p className="mb-4 text-5xl font-bold text-primary">12.5%</p>
-              <p className="text-slate-600">Trusted Booking Fee - save 50%!</p>
-            </div>
-          </div>
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl font-bold text-slate-900">
+            Membership Options
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">
+            Free Membership keeps the platform accessible. Paid memberships add
+            savings and enhanced member value for families who book more often.
+          </p>
         </div>
       </section>
 
@@ -339,11 +356,14 @@ export default function MembershipPage() {
               No membership plans available at the moment.
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
               {plans.map((plan) => {
                 const isPopular = plan.type === "6month";
+                const isFreePlan = plan.type === "free";
                 const isCurrentPlan =
-                  isActive && activeSubscriptionId === plan._id;
+                  isFreePlan
+                    ? !!session && !isActive
+                    : isActive && activeSubscriptionId === plan._id;
                 const features = plan.content
                   .split(",")
                   .map((f) => f.trim())
@@ -352,7 +372,7 @@ export default function MembershipPage() {
                 return (
                   <div
                     key={plan._id}
-                    className={`group relative flex h-full flex-col overflow-hidden rounded-[30px] border p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(15,23,42,0.12)] ${planAccent[plan.type] || planAccent.monthly}`}
+                    className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(15,23,42,0.12)] ${planAccent[plan.type] || planAccent.monthly}`}
                   >
                     <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent opacity-70" />
 
@@ -384,7 +404,7 @@ export default function MembershipPage() {
                     <div className="mb-6">
                       <div className="flex items-end gap-2">
                         <span className="text-5xl font-bold tracking-tight text-slate-900">
-                          ${plan.price}
+                          {isFreePlan ? "Free" : `$${plan.price}`}
                         </span>
                         <span className="pb-2 text-sm font-medium text-slate-500">
                           {typePeriod[plan.type] || ""}
@@ -420,7 +440,7 @@ export default function MembershipPage() {
                           disabled
                           className="flex w-full cursor-not-allowed items-center justify-center rounded-2xl bg-green-100 px-6 py-3.5 text-sm font-semibold text-green-700"
                         >
-                          Current Plan
+                          {isFreePlan ? "Current Free Membership" : "Current Plan"}
                         </button>
                       ) : (
                         <button
@@ -434,7 +454,9 @@ export default function MembershipPage() {
                         >
                           {loadingPlanId === plan._id
                             ? "Processing..."
-                            : isActive
+                            : isFreePlan
+                              ? "Become a Free Member"
+                              : isActive
                               ? "Change Membership"
                               : isExpired
                                 ? "Renew Membership"
