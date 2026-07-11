@@ -26,7 +26,7 @@ interface ReviewRating {
     firstName: string;
     lastName: string;
     profileImage?: string;
-  };
+  } | null;
   jobUserId: string;
   ratting: number;
   reviewText: string;

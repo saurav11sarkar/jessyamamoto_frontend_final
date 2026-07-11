@@ -12,7 +12,7 @@ interface ReviewRating {
     firstName: string;
     lastName: string;
     profileImage?: string;
-  };
+  } | null;
   jobUserId: string;
   ratting: number;
   reviewText: string;
@@ -69,6 +69,7 @@ const ReviewSection = ({
 
   // Get reviewer name
   const getReviewerName = (review: ReviewRating) => {
+    if (!review.userId) return "Anonymous user";
     const { firstName, lastName } = review.userId;
     return `${firstName} ${lastName}`;
   };
@@ -152,7 +153,7 @@ const ReviewSection = ({
           <div className="flex items-start gap-4 mb-4">
             <div className="relative w-12 h-12 rounded-full border border-gray-100 overflow-hidden">
               <Image
-                src={mostRecentReview.userId.profileImage || "/default-avatar.jpg"}
+                src={mostRecentReview.userId?.profileImage || "/default-avatar.jpg"}
                 alt={`${getReviewerName(mostRecentReview)}'s avatar`}
                 fill
                 className="object-cover"
