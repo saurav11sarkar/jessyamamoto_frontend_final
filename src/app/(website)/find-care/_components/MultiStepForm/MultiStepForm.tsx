@@ -221,8 +221,7 @@ export function MultiStepForm() {
       // Refetch user profile to get updated data
       await refetch();
 
-      // Redirect to success page or dashboard
-      router.push(`/`);
+      return result.data;
     } catch (error) {
       console.error("Profile update error:", error);
       setIsSubmitting(false);
@@ -266,8 +265,7 @@ export function MultiStepForm() {
         throw new Error(result.message || "Service registration failed");
       }
 
-      // Redirect to success page or dashboard
-      router.push(`/`);
+      router.push(`/all-find-care?id=${nextFormData.categoryId}`);
     } catch (error) {
       console.error("Service registration error:", error);
       setIsSubmitting(false);

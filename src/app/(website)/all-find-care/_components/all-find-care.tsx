@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
-import Banner from "@/components/shared/find-job-care/banner";
 import ProfileCard from "@/components/shared/find-job-care/profile-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +20,8 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import FindCareReviewCarousel from "./find-care-review-carousel";
 import { useSearchParams } from "next/navigation";
 import { ProfileCardSkeleton } from "@/components/shared/find-job-care/profile-card-skeleton";
-import { BannerSkeleton } from "@/components/shared/find-job-care/banner-skeleton";
 import { useSession } from "next-auth/react";
 
 // Types for the API response
@@ -94,9 +91,12 @@ interface ApiResponse {
 
 const AllFindCare = () => {
   const searchParams = useSearchParams();
-  const id = searchParams.get("id");
   const session = useSession();
   const token = session?.data?.user?.accessToken;
+  const requestedCategoryId = searchParams.get("id");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    () => requestedCategoryId || "",
+  );
   const [searchTerm, setSearchTerm] = useState(
     () => searchParams.get("searchTerm") || "",
   );
@@ -106,10 +106,27 @@ const AllFindCare = () => {
   const [maxHourRate, setMaxHourRate] = useState("");
   const [sortOrder, setSortOrder] = useState("desc");
 
+  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery<
+    Category[]
+  >({
+    queryKey: ["care-categories"],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/category`);
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.message || "Failed to fetch categories");
+      }
+      return Array.isArray(json?.data) ? json.data : [];
+    },
+  });
+
+  const activeCategoryId = selectedCategoryId || categories[0]?._id || "";
+  const activeCategory = categories.find((cat) => cat._id === activeCategoryId);
+
   const { data, isLoading, refetch } = useQuery<ApiResponse>({
     queryKey: [
       "all-find-care",
-      id,
+      activeCategoryId,
       searchTerm,
       locationFilter,
       availableFilter,
@@ -136,7 +153,7 @@ const AllFindCare = () => {
       }
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/service/service-base-user/${id}?${params.toString()}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/service/service-base-user/${activeCategoryId}?${params.toString()}`,
         { headers },
       );
       const data = await res.json();
@@ -145,7 +162,7 @@ const AllFindCare = () => {
       }
       return data;
     },
-    enabled: !!id,
+    enabled: !!activeCategoryId,
   });
 
   // Fetched directly so the banner (title/description/images) still shows
@@ -153,16 +170,16 @@ const AllFindCare = () => {
   const { data: categoryResponse, isLoading: isCategoryLoading } = useQuery<{
     data: Category;
   }>({
-    queryKey: ["category", id],
+    queryKey: ["category", activeCategoryId],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/category/${id}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/category/${activeCategoryId}`);
       const json = await res.json();
       if (!res.ok) {
         throw new Error(json?.message || "Failed to fetch category");
       }
       return json;
     },
-    enabled: !!id,
+    enabled: !!activeCategoryId,
   });
 
   const caregivers = data?.data || [];
@@ -285,29 +302,12 @@ const AllFindCare = () => {
 
   return (
     <div className="space-y-16 mb-20">
-      {/* Show Banner Skeleton while loading, otherwise show dynamic Banner */}
-      {isLoading || isCategoryLoading ? (
-        <BannerSkeleton />
-      ) : (
-        <Banner
-          title={categoryData?.name}
-          description={categoryData?.description}
-          banner={
-            categoryData?.banner?.length
-              ? categoryData.banner
-              : categoryData?.logo || categoryData?.image
-                ? [(categoryData.logo || categoryData.image) as string]
-                : undefined
-          }
-        />
-      )}
-
       <div className="container flex lg:flex-row flex-col-reverse gap-10">
         {/* all card here */}
         <div className="space-y-8 flex-1">
           <div>
             <h1 className="text-3xl font-semibold">
-              {categoryData?.name} available in your area:
+              {categoryData?.name || activeCategory?.name || "Caregivers"} available in your area:
             </h1>
 
             <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -316,10 +316,30 @@ const AllFindCare = () => {
                 <Input
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search by name, email, location"
+                  placeholder="Find your caretaker"
                   className="h-11 rounded-full border-blue-500 bg-blue-50/50 pl-9"
                 />
               </div>
+              <Select
+                value={activeCategoryId}
+                onValueChange={(value) => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("id", value);
+                  window.history.replaceState(null, "", `/all-find-care?${params.toString()}`);
+                  setSelectedCategoryId(value);
+                }}
+              >
+                <SelectTrigger className="w-[190px] rounded-full border-blue-500 bg-blue-50/50 h-11 px-4 hover:bg-blue-100/50 transition-colors focus:ring-1 focus:ring-blue-400">
+                  <SelectValue placeholder="Care type" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {categories.map((category) => (
+                    <SelectItem key={category._id} value={category._id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {/* City Select Component */}
               <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger className="w-[180px] rounded-full border-blue-500 bg-blue-50/50 h-11 px-4 hover:bg-blue-100/50 transition-colors focus:ring-1 focus:ring-blue-400">
@@ -393,7 +413,7 @@ const AllFindCare = () => {
             </div>
           </div>
 
-          {isLoading ? (
+          {isLoading || isCategoriesLoading || isCategoryLoading ? (
             <>
               <ProfileCardSkeleton />
               <ProfileCardSkeleton />
@@ -465,10 +485,6 @@ const AllFindCare = () => {
         </div>
       </div>
 
-      <FindCareReviewCarousel
-        categoryId={id}
-        categoryName={categoryData?.name}
-      />
     </div>
   );
 };

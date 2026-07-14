@@ -15,7 +15,6 @@ import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-import { toast } from "sonner";
 
 interface Category {
   _id: string;
@@ -77,14 +76,11 @@ const Hero = () => {
   });
 
   const handleSearch = () => {
-    if (!careType) {
-      toast.error("Please select a type of care to search.");
-      return;
-    }
     const params = new URLSearchParams();
+    if (careType) params.set("id", careType);
     if (city) params.set("searchTerm", city);
     if (date) params.set("date", date);
-    router.push(`/all-find-care?id=${careType}&${params.toString()}`);
+    router.push(`/all-find-care?${params.toString()}`);
   };
 
   const handleCityClick = (cityName: string) => {

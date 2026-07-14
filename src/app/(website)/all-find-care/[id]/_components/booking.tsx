@@ -29,6 +29,8 @@ interface BookingRequest {
   day: string;
   date: string;
   time: string;
+  endDate?: string;
+  endTime?: string;
 }
 
 interface BookingResponse {
@@ -66,6 +68,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
   const token = session?.user?.accessToken;
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +138,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     const slots: string[] = [];
 
     const timeToMinutes = (timeStr: string): number => {
-      const [timePart, modifier] = timeStr.split(" ");
+      const [timePart, modifier = ""] = timeStr.trim().split(" ");
       const [hourStr, minuteStr] = timePart.split(":");
       let hours = parseInt(hourStr, 10);
       const minutes = parseInt(minuteStr, 10);
@@ -151,11 +154,13 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     };
 
     const startMinutes = timeToMinutes(startTime);
-    const endMinutes = timeToMinutes(endTime);
+    let endMinutes = timeToMinutes(endTime);
+    if (endMinutes <= startMinutes) endMinutes += 24 * 60;
 
-    // Generate slots every 2 hours
-    for (let mins = startMinutes; mins < endMinutes; mins += 120) {
-      const hours = Math.floor(mins / 60);
+    // Generate hourly slots and include the closing boundary for end time.
+    for (let mins = startMinutes; mins <= endMinutes; mins += 60) {
+      const normalizedMins = mins % (24 * 60);
+      const hours = Math.floor(normalizedMins / 60);
       const minsOfHour = mins % 60;
       const period = hours >= 12 ? "PM" : "AM";
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
@@ -198,10 +203,12 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
         );
         setAvailableTimeSlots(slots);
         setSelectedTime(null);
+        setSelectedEndTime(null);
         setError(null);
       } else {
         setAvailableTimeSlots([]);
         setSelectedTime(null);
+        setSelectedEndTime(null);
       }
     }
   }, [date, days]);
@@ -233,7 +240,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
 
   // Handle booking
   const handleBookNow = () => {
-    if (!date || !selectedTime || !bookingServiceId) {
+    if (!date || !selectedTime || !selectedEndTime || !bookingServiceId) {
       setError("Missing required information for booking");
       return;
     }
@@ -247,13 +254,32 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     }
 
     const formattedTime = formatTimeForApi(selectedTime);
+    const formattedEndTime = formatTimeForApi(selectedEndTime);
     const formattedDate = format(date, "yyyy-MM-dd");
+    const startIndex = availableTimeSlots.indexOf(selectedTime);
+    const endIndex = availableTimeSlots.indexOf(selectedEndTime);
+
+    if (endIndex <= startIndex) {
+      setError("Please choose an end time after the start time");
+      return;
+    }
+
+    const endDate = new Date(date);
+    if (
+      selectedEndTime.includes("AM") &&
+      selectedTime.includes("PM") &&
+      endIndex > startIndex
+    ) {
+      endDate.setDate(endDate.getDate() + 1);
+    }
 
     const bookingData: BookingRequest = {
       serviceId: bookingServiceId,
       day: dayName,
       date: formattedDate,
       time: formattedTime,
+      endDate: format(endDate, "yyyy-MM-dd"),
+      endTime: formattedEndTime,
     };
 
     bookingMutation.mutate(bookingData);
@@ -325,22 +351,34 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-3 w-full">
+                <div className="grid grid-cols-2 gap-3 w-full">
                   {availableTimeSlots.length > 0 ? (
                     availableTimeSlots.map((time, index) => (
                       <button
                         key={index}
-                        onClick={() => setSelectedTime(time)}
+                        onClick={() => {
+                          if (!selectedTime || selectedEndTime) {
+                            setSelectedTime(time);
+                            setSelectedEndTime(null);
+                            return;
+                          }
+                          setSelectedEndTime(time);
+                        }}
                         disabled={bookingMutation.isPending}
                         className={cn(
                           "py-3 px-2 border rounded-xl text-sm transition-all",
-                          selectedTime === time
+                          selectedTime === time || selectedEndTime === time
                             ? "border-blue-600 bg-blue-50 text-blue-600 font-medium"
                             : "border-gray-200 text-gray-600 hover:border-blue-300",
                           bookingMutation.isPending &&
                             "opacity-50 cursor-not-allowed",
                         )}
                       >
+                        {selectedTime === time
+                          ? "Start "
+                          : selectedEndTime === time
+                            ? "End "
+                            : ""}
                         {time}
                       </button>
                     ))
@@ -395,6 +433,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
                 !date ||
                 !isDateAvailable(date) ||
                 !selectedTime ||
+                !selectedEndTime ||
                 bookingMutation.isPending
               }
               onClick={handleBookNow}
@@ -417,8 +456,9 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
         <p>Available days: {days.map((d) => d.day).join(", ")}</p>
         {date && isDateAvailable(date) && (
           <p className="mt-1">
-            Selected time: {format(date, "MMMM d, yyyy")} at{" "}
-            {selectedTime || "not selected"}
+            Selected time: {format(date, "MMMM d, yyyy")} from{" "}
+            {selectedTime || "not selected"} to{" "}
+            {selectedEndTime || "not selected"}
           </p>
         )}
       </div>

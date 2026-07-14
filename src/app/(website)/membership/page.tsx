@@ -46,14 +46,16 @@ interface UserProfile {
 
 const typeOrder: Record<string, number> = {
   free: 0,
-  monthly: 1,
-  "6month": 2,
-  yearly: 3,
-  annual: 3,
+  weekly: 1,
+  monthly: 2,
+  "6month": 3,
+  yearly: 4,
+  annual: 4,
 };
 
 const typeLabel: Record<string, string> = {
   free: "Free",
+  weekly: "Weekly",
   monthly: "Monthly",
   "6month": "6 Month",
   yearly: "Annual",
@@ -62,6 +64,7 @@ const typeLabel: Record<string, string> = {
 
 const typePeriod: Record<string, string> = {
   free: "forever",
+  weekly: "/week",
   monthly: "/month",
   "6month": "/6 months",
   yearly: "/year",
@@ -71,6 +74,8 @@ const typePeriod: Record<string, string> = {
 const planAccent: Record<string, string> = {
   free:
     "border-slate-200 bg-white/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)]",
+  weekly:
+    "border-slate-200 bg-white/90 shadow-[0_18px_50px_rgba(15,23,42,0.08)]",
   monthly:
     "border-slate-200 bg-white/90 shadow-[0_18px_50px_rgba(15,23,42,0.08)]",
   "6month":
@@ -81,6 +86,7 @@ const planAccent: Record<string, string> = {
 
 const planPill: Record<string, string> = {
   free: "bg-slate-100 text-slate-700",
+  weekly: "bg-slate-100 text-slate-700",
   monthly: "bg-slate-100 text-slate-700",
   "6month": "bg-primary text-white",
   yearly: "bg-emerald-100 text-emerald-700",
@@ -153,7 +159,10 @@ export default function MembershipPage() {
   });
 
   const plans = React.useMemo(() => {
-    const paidPlans = data?.data || [];
+    const paidPlans = (data?.data || []).filter((plan) => {
+      const label = `${plan.type} ${plan.title}`.toLowerCase();
+      return !label.includes("child");
+    });
     return [freeMembershipPlan, ...paidPlans].sort(
       (a, b) => (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99),
     );
@@ -238,9 +247,7 @@ export default function MembershipPage() {
                 <div className="mt-8 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                     <p className="text-sm text-slate-500">Free membership</p>
-                    <p className="mt-2 text-3xl font-bold text-slate-900">
-                      $0
-                    </p>
+                    <p className="mt-2 text-3xl font-bold text-slate-900">Free</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                     <p className="text-sm text-slate-500">Paid member fee</p>
@@ -250,7 +257,9 @@ export default function MembershipPage() {
                   </div>
                   <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
                     <p className="text-sm text-slate-500">Plan options</p>
-                    <p className="mt-2 text-3xl font-bold text-primary">4</p>
+                    <p className="mt-2 text-3xl font-bold text-primary">
+                      {Math.max(plans.length, 1)}
+                    </p>
                   </div>
                 </div>
               </div>
