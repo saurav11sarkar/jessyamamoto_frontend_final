@@ -1,30 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { consumeSelectedCity, onCitySelected } from "@/lib/selected-city";
 import {
-  Search,
   ShieldCheck,
   Star,
   Headphones,
-  MapPin,
-  CalendarDays,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
-
-interface Category {
-  _id: string;
-  name: string;
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: Category[];
-}
 
 const trustPoints = [
   {
@@ -55,36 +39,14 @@ const popularCities = [
 
 const Hero = () => {
   const router = useRouter();
-  const [city, setCity] = useState("");
-  const [careType, setCareType] = useState("");
-  const [date, setDate] = useState("");
-
-  useEffect(() => {
-    const selectedCity = consumeSelectedCity();
-    if (selectedCity) setCity(selectedCity);
-    return onCitySelected((selectedCity) => setCity(selectedCity));
-  }, []);
-
-  const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["hero-categories"],
-    queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/category`);
-      const json: ApiResponse = await res.json();
-      return json.success ? json.data : [];
-    },
-    staleTime: 1000 * 60 * 5,
-  });
 
   const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (careType) params.set("id", careType);
-    if (city) params.set("searchTerm", city);
-    if (date) params.set("date", date);
-    router.push(`/all-find-care?${params.toString()}`);
+    router.push("/all-find-care");
   };
 
   const handleCityClick = (cityName: string) => {
-    setCity(cityName);
+    const params = new URLSearchParams({ searchTerm: cityName });
+    router.push(`/all-find-care?${params.toString()}`);
   };
 
   return (
@@ -142,57 +104,8 @@ const Hero = () => {
               ))}
             </div>
 
-            <div
-              id="hero-search"
-              className="w-full rounded-2xl border border-gray-200 bg-white p-3 shadow-lg sm:p-4"
-            >
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="City or destination"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="relative">
-                  <select
-                    value={careType}
-                    onChange={(e) => setCareType(e.target.value)}
-                    className="h-12 w-full appearance-none rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-900 outline-none transition-colors focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="">Type of care</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="relative">
-                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleSearch}
-                  className="h-12 rounded-xl bg-primary px-6 text-base font-semibold text-white shadow-[0_8px_24px_hsl(var(--primary)/0.3)] transition-all hover:opacity-90"
-                >
-                  <Search className="mr-2 h-5 w-5" />
-                  Search
-                </Button>
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
+            <div className="w-full">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs text-gray-400">Popular:</span>
                 {popularCities.map((c) => (
                   <button

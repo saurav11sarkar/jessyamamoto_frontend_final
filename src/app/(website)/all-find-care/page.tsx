@@ -3,7 +3,7 @@ import AllFindCare from "./_components/all-find-care";
 
 const page = () => {
   return (
-    <div className="mt-20">
+    <div className="mt-28">
       <AllFindCare />
     </div>
   );

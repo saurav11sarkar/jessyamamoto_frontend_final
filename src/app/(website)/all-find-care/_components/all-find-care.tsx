@@ -120,13 +120,16 @@ const AllFindCare = () => {
     },
   });
 
-  const activeCategoryId = selectedCategoryId || categories[0]?._id || "";
+  const activeCategoryId = selectedCategoryId;
+  const activeCategoryIds = activeCategoryId
+    ? [activeCategoryId]
+    : categories.map((category) => category._id);
   const activeCategory = categories.find((cat) => cat._id === activeCategoryId);
 
   const { data, isLoading, refetch } = useQuery<ApiResponse>({
     queryKey: [
       "all-find-care",
-      activeCategoryId,
+      activeCategoryIds.join(","),
       searchTerm,
       locationFilter,
       availableFilter,
@@ -152,17 +155,34 @@ const AllFindCare = () => {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/service/service-base-user/${activeCategoryId}?${params.toString()}`,
-        { headers },
+      const responses = await Promise.all(
+        activeCategoryIds.map(async (categoryId) => {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/service/service-base-user/${categoryId}?${params.toString()}`,
+            { headers },
+          );
+          const json: ApiResponse = await res.json();
+          if (!res.ok) {
+            throw new Error(json?.message || "Failed to fetch caregivers");
+          }
+          return json;
+        }),
       );
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to fetch caregivers");
-      }
-      return data;
+
+      const combined = responses.flatMap((response) => response.data || []);
+      const total = responses.reduce(
+        (sum, response) => sum + (response.meta?.total || 0),
+        0,
+      );
+
+      return {
+        success: true,
+        message: "Service base user fetched successfully",
+        meta: { total, page: 1, limit: combined.length },
+        data: combined,
+      };
     },
-    enabled: !!activeCategoryId,
+    enabled: activeCategoryIds.length > 0,
   });
 
   // Fetched directly so the banner (title/description/images) still shows
@@ -278,6 +298,7 @@ const AllFindCare = () => {
   }, [caregivers, categoryResponse]);
 
   const categoryData = categoryResponse?.data;
+  const isShowingAllCategories = !activeCategoryId;
 
   const generateTags = (caregiver: ServiceBaseUser) => {
     const tags = [];
@@ -307,7 +328,10 @@ const AllFindCare = () => {
         <div className="space-y-8 flex-1">
           <div>
             <h1 className="text-3xl font-semibold">
-              {categoryData?.name || activeCategory?.name || "Caregivers"} available in your area:
+              {isShowingAllCategories
+                ? "Trusted partners"
+                : categoryData?.name || activeCategory?.name || "Caregivers"}{" "}
+              available in your area:
             </h1>
 
             <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -321,18 +345,29 @@ const AllFindCare = () => {
                 />
               </div>
               <Select
-                value={activeCategoryId}
+                value={activeCategoryId || "all"}
                 onValueChange={(value) => {
                   const params = new URLSearchParams(searchParams.toString());
-                  params.set("id", value);
-                  window.history.replaceState(null, "", `/all-find-care?${params.toString()}`);
-                  setSelectedCategoryId(value);
+                  if (value === "all") {
+                    params.delete("id");
+                    setSelectedCategoryId("");
+                  } else {
+                    params.set("id", value);
+                    setSelectedCategoryId(value);
+                  }
+                  const queryString = params.toString();
+                  window.history.replaceState(
+                    null,
+                    "",
+                    queryString ? `/all-find-care?${queryString}` : "/all-find-care",
+                  );
                 }}
               >
                 <SelectTrigger className="w-[190px] rounded-full border-blue-500 bg-blue-50/50 h-11 px-4 hover:bg-blue-100/50 transition-colors focus:ring-1 focus:ring-blue-400">
                   <SelectValue placeholder="Care type" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
+                  <SelectItem value="all">All partners</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category._id} value={category._id}>
                       {category.name}

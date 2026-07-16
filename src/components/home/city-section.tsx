@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { setSelectedCity } from "@/lib/selected-city";
 
 interface CityObject {
   cityName: string;
@@ -105,14 +104,8 @@ const CitySection = () => {
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
 
   const handleCityClick = (cityName: string) => {
-    setSelectedCity(cityName);
-    if (window.location.pathname === "/") {
-      document
-        .getElementById("hero-search")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    } else {
-      router.push("/#hero-search");
-    }
+    const params = new URLSearchParams({ searchTerm: cityName });
+    router.push(`/all-find-care?${params.toString()}`);
   };
 
   const {
