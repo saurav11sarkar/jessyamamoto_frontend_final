@@ -54,9 +54,9 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="overflow-hidden bg-[#FDF7F4] pt-10 text-slate-900">
+    <footer className="overflow-hidden bg-[#f6fffe] pt-10 text-slate-900">
       <div className="container">
-        <div className="mb-8 rounded-2xl border border-[#E8DDD8] bg-[#F8FEFE]/90 p-6 shadow-[0_14px_44px_rgba(15,23,42,0.06)] backdrop-blur-sm md:p-7">
+        <div className="mb-8 rounded-2xl border border-[#c9f2ee] bg-white/90 p-6 shadow-[0_14px_44px_rgba(15,23,42,0.06)] backdrop-blur-sm md:p-7">
           <div className="grid gap-10 lg:grid-cols-5">
             <div>
               <h4 className="mb-5 text-lg font-bold text-slate-900">

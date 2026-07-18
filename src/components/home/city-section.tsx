@@ -115,7 +115,9 @@ const CitySection = () => {
   } = useQuery<APIResponse>({
     queryKey: ["country-city"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/country`);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/country?limit=1000&sortBy=order&sortOrder=asc`,
+      );
       if (!res.ok) throw new Error("Network response was not ok");
       return res.json();
     },

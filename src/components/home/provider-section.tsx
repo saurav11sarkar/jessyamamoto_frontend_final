@@ -29,7 +29,7 @@ const ProviderSection = () => {
   ];
 
   return (
-    <section className="bg-[#FDF7F4] py-14 sm:py-16 lg:py-20">
+    <section className="bg-[#f6fffe] py-14 sm:py-16 lg:py-20">
       <div className="container mx-auto px-4">
         <div className="grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left">

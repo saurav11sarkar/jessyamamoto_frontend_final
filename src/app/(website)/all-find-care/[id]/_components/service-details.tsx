@@ -1,12 +1,14 @@
 import React, { useMemo } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { Award, CheckCircle2, ShieldCheck } from "lucide-react";
 
 interface ServiceDetailsProps {
   ageGroups: string[];
   canHelpWith: string[];
   education: string[];
   professionalSkills: string[];
-  languages: string[];
+  experiences?: string[];
+  certifications?: string[];
+  languages: Array<string | { language?: string; proficiency?: string; isNative?: boolean }>;
   hourlyRate: number;
   hideRate?: boolean;
   days: ServiceDay[];
@@ -26,6 +28,8 @@ export const ServiceDetails = ({
   canHelpWith = [],
   education = [],
   professionalSkills = [],
+  experiences = [],
+  certifications = [],
   languages = [],
   hourlyRate = 0,
   hideRate = false,
@@ -46,6 +50,27 @@ export const ServiceDetails = ({
     return Array.from(new Set(education));
   }, [education]);
 
+  const displayLanguages = useMemo(
+    () =>
+      languages
+        .map((item) =>
+          typeof item === "string"
+            ? item
+            : [item.language, item.proficiency].filter(Boolean).join(" - "),
+        )
+        .filter(Boolean),
+    [languages],
+  );
+
+  const trustBadges = useMemo(
+    () =>
+      [
+        ...experiences.map((item) => ({ label: item, icon: Award })),
+        ...certifications.map((item) => ({ label: item, icon: ShieldCheck })),
+      ].filter((item) => item.label),
+    [experiences, certifications],
+  );
+
   return (
     <div className="container text-[#1a1a1a] pb-16">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -54,6 +79,23 @@ export const ServiceDetails = ({
           {/* Services */}
           <section>
             <h2 className="text-2xl font-bold mb-4">Services</h2>
+
+            {trustBadges.length > 0 && (
+              <div className="mb-6 flex flex-wrap gap-2">
+                {trustBadges.map((badge, index) => {
+                  const Icon = badge.icon;
+                  return (
+                    <span
+                      key={`${badge.label}-${index}`}
+                      className="inline-flex items-center gap-2 rounded-full border border-[#9aece3] bg-[#ecfffd] px-3 py-1.5 text-sm font-semibold text-[#087c73]"
+                    >
+                      <Icon className="h-4 w-4" />
+                      {badge.label}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Age Groups */}
             {ageGroups.length > 0 && (
@@ -114,7 +156,7 @@ export const ServiceDetails = ({
           {/* Qualifications */}
           {(education.length > 0 ||
             professionalSkills.length > 0 ||
-            languages.length > 0) && (
+            displayLanguages.length > 0) && (
             <section>
               <h2 className="text-2xl font-bold mb-4">Qualifications</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -142,13 +184,13 @@ export const ServiceDetails = ({
                   </div>
                 )}
 
-                {languages.length > 0 && (
+                {displayLanguages.length > 0 && (
                   <div>
                     <h3 className="text-sm font-semibold mb-2">
                       Languages spoken
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {languages.map((lang, index) => (
+                      {displayLanguages.map((lang, index) => (
                         <span
                           key={index}
                           className="px-3 py-1 rounded-full border border-blue-600 text-blue-600 text-sm"
