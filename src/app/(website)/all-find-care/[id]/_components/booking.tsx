@@ -77,6 +77,15 @@ interface BookingResponse {
   };
 }
 
+interface SubscriptionPlan {
+  _id: string;
+  type: string;
+  title: string;
+  price: number;
+  bookingFeePercent?: number;
+  bookingFeeMinimum?: number;
+}
+
 const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
   const params = useParams();
   const { data: session } = useSession();
@@ -137,6 +146,17 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     enabled: !!token,
   });
 
+  const { data: subscriptionPlans } = useQuery<{ data: SubscriptionPlan[] }>({
+    queryKey: ["bookingMembershipPlans"],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/subscription?limit=20`,
+      );
+      if (!res.ok) throw new Error("Failed to load membership plans");
+      return res.json();
+    },
+  });
+
   const isMember =
     userProfile?.isSubscription === true &&
     userProfile?.subscriptionExpiry &&
@@ -161,6 +181,12 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
       previewServiceSubtotal * (previewFeePercent / 100),
       previewFeeMinimum,
     ).toFixed(2),
+  );
+  const nonMemberPreviewFee = Number(
+    Math.max(previewServiceSubtotal * 0.2, 3.5).toFixed(2),
+  );
+  const paidPlans = (subscriptionPlans?.data || []).filter((plan) =>
+    ["monthly", "quarterly", "annual", "yearly"].includes(plan.type),
   );
 
   const bookingMutation = useMutation({
@@ -650,6 +676,58 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
         </CardContent>
       </Card>
 
+      {!isMember && paidPlans.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-blue-100 bg-white p-5">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Membership savings for this booking
+            </h3>
+            <p className="text-sm text-slate-500">
+              Compare before checkout. The booking fee shown at checkout is the
+              source of truth.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {paidPlans.map((plan) => {
+              const memberPercent = plan.bookingFeePercent ?? 8.88;
+              const memberMinimum = plan.bookingFeeMinimum ?? 1.25;
+              const memberFee = Number(
+                Math.max(
+                  previewServiceSubtotal * (memberPercent / 100),
+                  memberMinimum,
+                ).toFixed(2),
+              );
+              const savings = Math.max(nonMemberPreviewFee - memberFee, 0);
+              const breakEven =
+                savings > 0 ? Math.ceil(plan.price / savings) : null;
+              return (
+                <div
+                  key={plan._id}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <p className="font-semibold text-slate-900">{plan.title}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    ${plan.price} membership
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-primary">
+                    Save ${savings.toFixed(2)} on this booking
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {memberPercent}% fee, ${memberMinimum.toFixed(2)} minimum
+                  </p>
+                  {breakEven && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Break-even after about {breakEven} similar booking
+                      {breakEven === 1 ? "" : "s"}.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Availability Summary & Payment Info */}
       <div className="mt-6 text-sm text-gray-500">
         <p>Available days: {days.map((d) => normalizeDay(d.day)).join(", ")}</p>
@@ -666,6 +744,8 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
         <ul className="mt-2 text-sm text-amber-700 space-y-1 list-disc list-inside">
           <li>You pay only the Trusted Booking Fee online. Request bookings confirm after partner acceptance.</li>
           <li>The caregiver&apos;s service fee is paid directly to them at the time of service.</li>
+          <li>Pay directly to the partner in local currency at the time of service.</li>
+          <li>More than a booking: the fee supports verification, platform safety, and support; it is not a charitable donation.</li>
           <li>Your booking includes identity verification, secure messaging, reviews, and platform support.</li>
         </ul>
       </div>

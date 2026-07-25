@@ -52,6 +52,21 @@ interface UserData {
   perferences: string[];
   experiences?: string[];
   certifications?: string[];
+  badges?: Array<{
+    badge?: {
+      _id: string;
+      title: string;
+      description: string;
+      issuer?: string;
+      key?: string;
+    };
+    awardedBy?: { firstName?: string; lastName?: string; email?: string };
+    verified?: boolean;
+    validThrough?: string;
+    note?: string;
+    awardedAt?: string;
+    revokedAt?: string;
+  }>;
   galary?: string[];
   createdAt: string;
   updatedAt: string;
@@ -207,6 +222,7 @@ const FindCareDetails = () => {
         professionalSkills={userInfo?.professionalSkill || []}
         experiences={userInfo?.experiences || []}
         certifications={userInfo?.certifications || userInfo?.galary || []}
+        badges={userInfo?.badges || []}
         languages={userInfo?.language || []}
         hourlyRate={0}
         hideRate={true}

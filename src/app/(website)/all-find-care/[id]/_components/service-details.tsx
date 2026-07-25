@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import { Award, CheckCircle2, ShieldCheck } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Award, CheckCircle2, ShieldCheck, X } from "lucide-react";
 
 interface ServiceDetailsProps {
   ageGroups: string[];
@@ -8,12 +8,33 @@ interface ServiceDetailsProps {
   professionalSkills: string[];
   experiences?: string[];
   certifications?: string[];
+  badges?: UserBadge[];
   languages: Array<string | { language?: string; proficiency?: string; isNative?: boolean }>;
   hourlyRate: number;
   hideRate?: boolean;
   days: ServiceDay[];
   categoryName?: string;
   categoryDescription?: string;
+}
+
+interface UserBadge {
+  badge?: {
+    _id: string;
+    title: string;
+    description: string;
+    issuer?: string;
+    key?: string;
+  };
+  awardedBy?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  verified?: boolean;
+  validThrough?: string;
+  note?: string;
+  awardedAt?: string;
+  revokedAt?: string;
 }
 
 interface ServiceDay {
@@ -30,6 +51,7 @@ export const ServiceDetails = ({
   professionalSkills = [],
   experiences = [],
   certifications = [],
+  badges = [],
   languages = [],
   hourlyRate = 0,
   hideRate = false,
@@ -37,6 +59,7 @@ export const ServiceDetails = ({
   categoryName = "",
   categoryDescription = "",
 }: ServiceDetailsProps) => {
+  const [selectedBadge, setSelectedBadge] = useState<UserBadge | null>(null);
   const formatDay = (day: string) => {
     return day.slice(0, 3);
   };
@@ -65,10 +88,17 @@ export const ServiceDetails = ({
   const trustBadges = useMemo(
     () =>
       [
+        ...badges
+          .filter((item) => item.badge && !item.revokedAt)
+          .map((item) => ({
+            label: item.badge?.title || "",
+            icon: ShieldCheck,
+            userBadge: item,
+          })),
         ...experiences.map((item) => ({ label: item, icon: Award })),
         ...certifications.map((item) => ({ label: item, icon: ShieldCheck })),
       ].filter((item) => item.label),
-    [experiences, certifications],
+    [badges, experiences, certifications],
   );
 
   return (
@@ -85,17 +115,28 @@ export const ServiceDetails = ({
                 {trustBadges.map((badge, index) => {
                   const Icon = badge.icon;
                   return (
-                    <span
+                    <button
                       key={`${badge.label}-${index}`}
+                      type="button"
+                      onClick={() =>
+                        "userBadge" in badge && badge.userBadge
+                          ? setSelectedBadge(badge.userBadge)
+                          : undefined
+                      }
                       className="inline-flex items-center gap-2 rounded-full border border-[#9aece3] bg-[#ecfffd] px-3 py-1.5 text-sm font-semibold text-[#087c73]"
                     >
                       <Icon className="h-4 w-4" />
                       {badge.label}
-                    </span>
+                    </button>
                   );
                 })}
               </div>
             )}
+            <p className="mb-6 text-xs text-slate-500">
+              Badges are JetSet trust signals based on documents, training, or
+              manual review. They support better decisions but do not guarantee
+              risk-free care.
+            </p>
 
             {/* Age Groups */}
             {ageGroups.length > 0 && (
@@ -247,6 +288,55 @@ export const ServiceDetails = ({
           </div>
         )}
       </div>
+      {selectedBadge?.badge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">
+                  {selectedBadge.badge.title}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Issued by {selectedBadge.badge.issuer || "JetSet Cares"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedBadge(null)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm leading-6 text-slate-700">
+              {selectedBadge.badge.description}
+            </p>
+            <div className="mt-5 space-y-2 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+              <p>
+                Verified:{" "}
+                <span className="font-semibold">
+                  {selectedBadge.verified ? "Yes" : "No"}
+                </span>
+              </p>
+              {selectedBadge.validThrough && (
+                <p>
+                  Valid through:{" "}
+                  {new Date(selectedBadge.validThrough).toLocaleDateString()}
+                </p>
+              )}
+              {selectedBadge.awardedBy && (
+                <p>
+                  Awarded by:{" "}
+                  {[selectedBadge.awardedBy.firstName, selectedBadge.awardedBy.lastName]
+                    .filter(Boolean)
+                    .join(" ") || selectedBadge.awardedBy.email}
+                </p>
+              )}
+              {selectedBadge.note && <p>Note: {selectedBadge.note}</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

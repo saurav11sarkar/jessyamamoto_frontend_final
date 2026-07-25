@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import {
   Heart,
+  Award,
   Briefcase,
   Users,
   ChevronRight,
@@ -40,6 +41,17 @@ interface UserProfile {
   gender: string;
   nidNumber?: string;
   subscription?: string;
+  badges?: Array<{
+    badge?: {
+      _id: string;
+      title: string;
+      description: string;
+      issuer?: string;
+    };
+    verified?: boolean;
+    validThrough?: string;
+    revokedAt?: string;
+  }>;
 }
 
 const MyServices = () => {
@@ -252,7 +264,7 @@ const MyServices = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
@@ -302,6 +314,52 @@ const MyServices = () => {
               </div>
             </div>
           </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Badge Wallet</p>
+                <p className="text-3xl font-bold text-emerald-600">
+                  {userProfile.badges?.filter((b) => !b.revokedAt).length || 0}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
+                <Award className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-8 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
+            <Award className="h-5 w-5 text-emerald-600" />
+            Badge Wallet
+          </h2>
+          {userProfile.badges?.filter((item) => item.badge && !item.revokedAt)
+            .length ? (
+            <div className="flex flex-wrap gap-2">
+              {userProfile.badges
+                .filter((item) => item.badge && !item.revokedAt)
+                .map((item) => (
+                  <div
+                    key={item.badge?._id}
+                    className="rounded-full border border-[#9aece3] bg-[#ecfffd] px-3 py-2 text-sm font-semibold text-[#087c73]"
+                    title={`${item.badge?.description || ""}${
+                      item.validThrough
+                        ? ` Valid through ${new Date(item.validThrough).toLocaleDateString()}`
+                        : ""
+                    }`}
+                  >
+                    {item.badge?.title}
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">
+              No badges assigned yet. Admin can assign badges after reviewing
+              documents, training, or verification.
+            </p>
+          )}
         </div>
 
         {/* Services Grid */}
