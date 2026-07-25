@@ -208,9 +208,7 @@ export const ServiceDetails = ({
           {/* Availability */}
           {days.length > 0 && (
             <section>
-              <h2 className="text-xl font-bold mb-4">
-                Contact to check availability
-              </h2>
+              <h2 className="text-xl font-bold mb-4">Availability</h2>
               <div className="space-y-3">
                 {days.map((item, i) => (
                   <div key={item._id || i} className="flex gap-20 text-sm">

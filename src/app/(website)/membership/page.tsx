@@ -20,6 +20,8 @@ interface Subscription {
   type: string;
   title: string;
   price: number;
+  bookingFeePercent?: number;
+  bookingFeeMinimum?: number;
   description: string;
   content: string;
   totalSubscripeUser?: string[];
@@ -49,6 +51,7 @@ const typeOrder: Record<string, number> = {
   weekly: 1,
   monthly: 2,
   "6month": 3,
+  quarterly: 3,
   yearly: 4,
   annual: 4,
 };
@@ -58,6 +61,7 @@ const typeLabel: Record<string, string> = {
   weekly: "Weekly",
   monthly: "Monthly",
   "6month": "6 Month",
+  quarterly: "Quarterly",
   yearly: "Annual",
   annual: "Annual",
 };
@@ -67,6 +71,7 @@ const typePeriod: Record<string, string> = {
   weekly: "/week",
   monthly: "/month",
   "6month": "/6 months",
+  quarterly: "/quarter",
   yearly: "/year",
   annual: "/year",
 };
@@ -80,6 +85,8 @@ const planAccent: Record<string, string> = {
     "border-slate-200 bg-white/90 shadow-[0_18px_50px_rgba(15,23,42,0.08)]",
   "6month":
     "border-primary/40 bg-gradient-to-b from-primary/[0.14] via-white to-white shadow-[0_24px_70px_rgba(14,165,233,0.2)]",
+  quarterly:
+    "border-primary/40 bg-gradient-to-b from-primary/[0.14] via-white to-white shadow-[0_24px_70px_rgba(14,165,233,0.2)]",
   yearly:
     "border-emerald-200 bg-gradient-to-b from-emerald-50 via-white to-white shadow-[0_18px_50px_rgba(16,185,129,0.12)]",
 };
@@ -89,6 +96,7 @@ const planPill: Record<string, string> = {
   weekly: "bg-slate-100 text-slate-700",
   monthly: "bg-slate-100 text-slate-700",
   "6month": "bg-primary text-white",
+  quarterly: "bg-primary text-white",
   yearly: "bg-emerald-100 text-emerald-700",
   annual: "bg-emerald-100 text-emerald-700",
 };
@@ -101,7 +109,9 @@ const freeMembershipPlan: Subscription = {
   description:
     "Create a JetSet Cares account, explore care options, and book without paid member savings.",
   content:
-    "Free account access, Browse trusted care profiles, Standard Trusted Booking Fee applies, Upgrade anytime for member savings",
+    "Free account access, Browse trusted care profiles, 20% Trusted Booking Fee with $3.50 minimum, Upgrade anytime for member savings",
+  bookingFeePercent: 20,
+  bookingFeeMinimum: 3.5,
 };
 
 export default function MembershipPage() {
@@ -252,13 +262,13 @@ export default function MembershipPage() {
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                     <p className="text-sm text-slate-500">Paid member fee</p>
                     <p className="mt-2 text-3xl font-bold text-slate-900">
-                      12.5%
+                      8.88%
                     </p>
                   </div>
                   <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                    <p className="text-sm text-slate-500">Plan options</p>
+                    <p className="text-sm text-slate-500">Non-member fee</p>
                     <p className="mt-2 text-3xl font-bold text-primary">
-                      {Math.max(plans.length, 1)}
+                      20%
                     </p>
                   </div>
                 </div>
@@ -367,7 +377,7 @@ export default function MembershipPage() {
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
               {plans.map((plan) => {
-                const isPopular = plan.type === "6month";
+                const isPopular = plan.type === "quarterly" || plan.type === "6month";
                 const isFreePlan = plan.type === "free";
                 const isCurrentPlan =
                   isFreePlan
@@ -421,6 +431,10 @@ export default function MembershipPage() {
                       </div>
                       <p className="mt-4 text-sm leading-6 text-slate-600">
                         {plan.description}
+                      </p>
+                      <p className="mt-3 rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">
+                        Booking fee: {plan.bookingFeePercent ?? (isFreePlan ? 20 : 8.88)}%
+                        {" "}minimum ${plan.bookingFeeMinimum ?? (isFreePlan ? 3.5 : 1.25)}
                       </p>
                     </div>
 
@@ -498,7 +512,7 @@ export default function MembershipPage() {
               <p className="text-slate-600">
                 Your membership is{" "}
                 <span className="font-semibold text-green-600">active</span> and
-                your reduced 12.5% booking fee is automatically applied to all
+                your reduced 8.88% booking fee is automatically applied to all
                 bookings. Expires on{" "}
                 <span className="font-semibold">{expiryDate}</span>.
               </p>
@@ -512,7 +526,7 @@ export default function MembershipPage() {
             ) : (
               <p className="text-slate-600">
                 You don&apos;t have an active membership yet. Become a member
-                above to enjoy reduced 12.5% booking fees instead of 25%.
+                above to enjoy reduced 8.88% booking fees instead of 20%.
               </p>
             )}
           </div>

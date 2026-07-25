@@ -22,7 +22,7 @@ interface Payment {
   _id: string;
   amount: number;
   currency: string;
-  status: "pending" | "completed" | "failed" | "refunded";
+  status: "pending" | "authorized" | "completed" | "failed" | "refunded";
   paymentType: "subscription" | "booking";
   userType: "findJob" | "findCare";
   createdAt: string;
@@ -72,13 +72,14 @@ interface PaymentResponse {
 }
 
 type FilterTab = "all" | "subscription" | "booking";
-type StatusFilter = "all" | "completed" | "pending" | "failed" | "refunded";
+type StatusFilter = "all" | "completed" | "authorized" | "pending" | "failed" | "refunded";
 
 const statusConfig: Record<
   string,
   { color: string; icon: React.ElementType; label: string }
 > = {
   completed: { color: "bg-green-100 text-green-800", icon: CheckCircle, label: "Completed" },
+  authorized: { color: "bg-blue-100 text-blue-800", icon: Clock, label: "Authorized" },
   pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock, label: "Pending" },
   failed: { color: "bg-red-100 text-red-800", icon: XCircle, label: "Failed" },
   refunded: { color: "bg-purple-100 text-purple-800", icon: RotateCcw, label: "Refunded" },
@@ -146,6 +147,7 @@ const PaymentHistoryPage = () => {
   const statusTabs: { label: string; value: StatusFilter }[] = [
     { label: "All Status", value: "all" },
     { label: "Completed", value: "completed" },
+    { label: "Authorized", value: "authorized" },
     { label: "Pending", value: "pending" },
     { label: "Failed", value: "failed" },
   ];

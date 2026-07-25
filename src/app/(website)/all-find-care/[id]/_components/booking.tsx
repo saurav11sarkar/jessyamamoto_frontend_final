@@ -31,6 +31,18 @@ interface BookingRequest {
   time: string;
   endDate?: string;
   endTime?: string;
+  bookingMode: "request" | "instant";
+  hotelName?: string;
+  location?: string;
+  childCount?: number;
+  childAges?: string[];
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  allergies?: string;
+  medicalNotes?: string;
+  instructions?: string;
+  timezone?: string;
+  idempotencyKey?: string;
 }
 
 interface BookingResponse {
@@ -56,8 +68,11 @@ interface BookingResponse {
     sessionId: string;
     paymentDetails: {
       totalAmount: number;
-      adminCommission: number;
-      providerAmount: number;
+      trustedBookingFee: number;
+      payPartnerLater: number;
+      bookingFeePercent: number;
+      bookingFeeMinimum: number;
+      serviceSubtotal: number;
     };
   };
 }
@@ -72,6 +87,41 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [bookingMode, setBookingMode] = useState<"request" | "instant">(
+    "request",
+  );
+  const [hotelName, setHotelName] = useState("");
+  const [bookingLocation, setBookingLocation] = useState("");
+  const [childCount, setChildCount] = useState(1);
+  const [childAges, setChildAges] = useState("");
+  const [emergencyContactName, setEmergencyContactName] = useState("");
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState("");
+  const [allergies, setAllergies] = useState("");
+  const [medicalNotes, setMedicalNotes] = useState("");
+  const [instructions, setInstructions] = useState("");
+
+  const normalizeDay = (day: string) => {
+    const dayMap: Record<string, string> = {
+      sun: "Sunday",
+      sunday: "Sunday",
+      mon: "Monday",
+      monday: "Monday",
+      tue: "Tuesday",
+      tues: "Tuesday",
+      tuesday: "Tuesday",
+      wed: "Wednesday",
+      wednesday: "Wednesday",
+      thu: "Thursday",
+      thur: "Thursday",
+      thurs: "Thursday",
+      thursday: "Thursday",
+      fri: "Friday",
+      friday: "Friday",
+      sat: "Saturday",
+      saturday: "Saturday",
+    };
+    return dayMap[day.trim().toLowerCase()] || day;
+  };
 
   const { data: userProfile } = useQuery({
     queryKey: ["userProfileBooking"],
@@ -93,6 +143,25 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     new Date(userProfile.subscriptionExpiry) > new Date();
 
   const bookingServiceId = serviceId || (params?.id as string);
+
+  const selectedDurationHours = React.useMemo(() => {
+    if (!selectedTime || !selectedEndTime) return 1;
+    const startIndex = availableTimeSlots.indexOf(selectedTime);
+    const endIndex = availableTimeSlots.indexOf(selectedEndTime);
+    return Math.max(endIndex - startIndex, 1);
+  }, [availableTimeSlots, selectedEndTime, selectedTime]);
+
+  const previewServiceSubtotal = Number(
+    ((hourlyRate || 0) * selectedDurationHours).toFixed(2),
+  );
+  const previewFeePercent = isMember ? 8.88 : 20;
+  const previewFeeMinimum = isMember ? 1.25 : 3.5;
+  const previewTrustedFee = Number(
+    Math.max(
+      previewServiceSubtotal * (previewFeePercent / 100),
+      previewFeeMinimum,
+    ).toFixed(2),
+  );
 
   const bookingMutation = useMutation({
     mutationFn: async (bookingData: BookingRequest) => {
@@ -161,7 +230,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     for (let mins = startMinutes; mins <= endMinutes; mins += 60) {
       const normalizedMins = mins % (24 * 60);
       const hours = Math.floor(normalizedMins / 60);
-      const minsOfHour = mins % 60;
+      const minsOfHour = normalizedMins % 60;
       const period = hours >= 12 ? "PM" : "AM";
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
 
@@ -194,7 +263,9 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
   useEffect(() => {
     if (date && days.length > 0) {
       const selectedDayName = getAvailableDayFromDate(date);
-      const daySchedule = days.find((d) => d.day === selectedDayName);
+      const daySchedule = days.find(
+        (d) => normalizeDay(d.day) === selectedDayName,
+      );
 
       if (daySchedule) {
         const slots = generateTimeSlots(
@@ -216,7 +287,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
   // Check if selected date is available
   const isDateAvailable = (date: Date): boolean => {
     const dayName = format(date, "EEEE");
-    return days.some((d) => d.day === dayName);
+    return days.some((d) => normalizeDay(d.day) === dayName);
   };
 
   // Handle week navigation
@@ -246,7 +317,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     }
 
     const dayName = format(date, "EEEE");
-    const daySchedule = days.find((d) => d.day === dayName);
+    const daySchedule = days.find((d) => normalizeDay(d.day) === dayName);
 
     if (!daySchedule) {
       setError("Invalid schedule selected");
@@ -261,6 +332,18 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
 
     if (endIndex <= startIndex) {
       setError("Please choose an end time after the start time");
+      return;
+    }
+
+    if (
+      !hotelName.trim() ||
+      !bookingLocation.trim() ||
+      !emergencyContactName.trim() ||
+      !emergencyContactPhone.trim()
+    ) {
+      setError(
+        "Please add hotel/location and emergency contact details before checkout",
+      );
       return;
     }
 
@@ -280,6 +363,21 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
       time: formattedTime,
       endDate: format(endDate, "yyyy-MM-dd"),
       endTime: formattedEndTime,
+      bookingMode,
+      hotelName,
+      location: bookingLocation,
+      childCount,
+      childAges: childAges
+        .split(",")
+        .map((age) => age.trim())
+        .filter(Boolean),
+      emergencyContactName,
+      emergencyContactPhone,
+      allergies,
+      medicalNotes,
+      instructions,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      idempotencyKey: `${bookingServiceId}-${formattedDate}-${formattedTime}-${formattedEndTime}`,
     };
 
     bookingMutation.mutate(bookingData);
@@ -416,17 +514,112 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
                 <div className="border-t border-blue-100 mt-3 pt-3">
                   <p className="text-sm text-gray-500 mb-1">Trusted Booking Fee</p>
                   <p className="text-lg font-semibold text-primary">
-                    {isMember ? "12.5%" : "25%"}
+                    {previewFeePercent}%
                     <span className="text-sm font-normal text-gray-400 ml-1">
-                      (${(hourlyRate * (isMember ? 0.125 : 0.25)).toFixed(2)})
+                      (${previewTrustedFee.toFixed(2)} minimum ${previewFeeMinimum.toFixed(2)})
                     </span>
                   </p>
                   {!isMember && (
-                    <p className="text-xs text-primary mt-1">Members pay only 12.5%</p>
+                    <p className="text-xs text-primary mt-1">Members pay 8.88% with a $1.25 minimum</p>
                   )}
+                </div>
+                <div className="border-t border-blue-100 mt-3 pt-3 text-left text-xs text-slate-600 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Pay now</span>
+                    <span className="font-semibold">${previewTrustedFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Pay partner later</span>
+                    <span className="font-semibold">${previewServiceSubtotal.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             )}
+            <div className="w-full max-w-xs rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+              <div className="grid grid-cols-2 rounded-lg bg-gray-100 p-1 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setBookingMode("request")}
+                  className={cn(
+                    "rounded-md px-3 py-2 font-medium",
+                    bookingMode === "request"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-gray-500",
+                  )}
+                >
+                  Request
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBookingMode("instant")}
+                  className={cn(
+                    "rounded-md px-3 py-2 font-medium",
+                    bookingMode === "instant"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-gray-500",
+                  )}
+                >
+                  Instant
+                </button>
+              </div>
+              <input
+                value={hotelName}
+                onChange={(e) => setHotelName(e.target.value)}
+                placeholder="Hotel / stay name"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <input
+                value={bookingLocation}
+                onChange={(e) => setBookingLocation(e.target.value)}
+                placeholder="Service address / room details"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <div className="grid grid-cols-[90px_1fr] gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  value={childCount}
+                  onChange={(e) => setChildCount(Number(e.target.value))}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+                />
+                <input
+                  value={childAges}
+                  onChange={(e) => setChildAges(e.target.value)}
+                  placeholder="Child ages, comma separated"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+                />
+              </div>
+              <input
+                value={emergencyContactName}
+                onChange={(e) => setEmergencyContactName(e.target.value)}
+                placeholder="Emergency contact name"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <input
+                value={emergencyContactPhone}
+                onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                placeholder="Emergency contact phone"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <textarea
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+                placeholder="Allergies"
+                className="min-h-[70px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <textarea
+                value={medicalNotes}
+                onChange={(e) => setMedicalNotes(e.target.value)}
+                placeholder="Medical notes"
+                className="min-h-[70px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <textarea
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="Instructions"
+                className="min-h-[70px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
             <Button
               className="text-white px-16 py-7 rounded-full text-lg font-medium transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
@@ -434,6 +627,10 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
                 !isDateAvailable(date) ||
                 !selectedTime ||
                 !selectedEndTime ||
+                !hotelName.trim() ||
+                !bookingLocation.trim() ||
+                !emergencyContactName.trim() ||
+                !emergencyContactPhone.trim() ||
                 bookingMutation.isPending
               }
               onClick={handleBookNow}
@@ -444,7 +641,9 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
                   Processing...
                 </div>
               ) : (
-                "Pay Booking Fee & Confirm"
+                bookingMode === "request"
+                  ? "Authorize Fee & Request"
+                  : "Pay Booking Fee & Confirm"
               )}
             </Button>
           </div>
@@ -453,7 +652,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
 
       {/* Availability Summary & Payment Info */}
       <div className="mt-6 text-sm text-gray-500">
-        <p>Available days: {days.map((d) => d.day).join(", ")}</p>
+        <p>Available days: {days.map((d) => normalizeDay(d.day)).join(", ")}</p>
         {date && isDateAvailable(date) && (
           <p className="mt-1">
             Selected time: {format(date, "MMMM d, yyyy")} from{" "}
@@ -465,7 +664,7 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
       <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
         <p className="text-sm font-medium text-amber-800">How payment works</p>
         <ul className="mt-2 text-sm text-amber-700 space-y-1 list-disc list-inside">
-          <li>You pay only the Trusted Booking Fee online to confirm your booking.</li>
+          <li>You pay only the Trusted Booking Fee online. Request bookings confirm after partner acceptance.</li>
           <li>The caregiver&apos;s service fee is paid directly to them at the time of service.</li>
           <li>Your booking includes identity verification, secure messaging, reviews, and platform support.</li>
         </ul>

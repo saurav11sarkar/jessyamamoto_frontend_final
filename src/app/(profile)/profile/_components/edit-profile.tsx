@@ -723,10 +723,10 @@ const EditProfilePage = () => {
                     }`}
                   >
                     {subscriptionInfo.isActive
-                      ? `Expires on ${subscriptionInfo.expiry} — Booking fee: 12.5%`
+                      ? `Expires on ${subscriptionInfo.expiry} — Booking fee: 8.88%`
                       : subscriptionInfo.isExpired
-                        ? `Expired on ${subscriptionInfo.expiry} — Booking fee: 25%`
-                        : "Become a member to get a reduced 12.5% booking fee"}
+                        ? `Expired on ${subscriptionInfo.expiry} — Booking fee: 20%`
+                        : "Become a member to get a reduced 8.88% booking fee"}
                   </p>
                 </div>
               </div>

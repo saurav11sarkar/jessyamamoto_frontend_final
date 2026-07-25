@@ -31,19 +31,20 @@ const BookingSuccess = () => {
         </div>
 
         <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Booking Confirmed!
+          Booking Payment Received
         </h1>
 
         <p className="text-gray-600 mb-6">
-          Your Trusted Booking Fee has been paid successfully. The care provider
-          will be notified and you can track the status in your bookings.
+          Your Trusted Booking Fee checkout was successful. Request bookings
+          are confirmed after the partner accepts; instant bookings confirm
+          automatically after payment.
         </p>
 
         <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Status</span>
             <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-              Confirmed
+              In Progress
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">

@@ -119,13 +119,23 @@ export default function MultiStepForm() {
 
   // Convert ScheduleTypes to API format
   const convertToAPIFormat = (days: ScheduleTypes): DaySchedule[] => {
+    const dayNameMap: Record<string, string> = {
+      Sun: "Sunday",
+      Mon: "Monday",
+      Tue: "Tuesday",
+      Wed: "Wednesday",
+      Thu: "Thursday",
+      Fri: "Friday",
+      Sat: "Saturday",
+    };
+
     return days.day.map((day: string, index: number) => {
       const timeRange = days.time[index] || "10:00-12:00";
       const [startTime, endTime] = timeRange
         .split("-")
         .map((t: string) => t.trim());
       return {
-        day,
+        day: dayNameMap[day] || day,
         startTime: startTime || "09:00 AM",
         endTime: endTime || "05:00 PM",
       };

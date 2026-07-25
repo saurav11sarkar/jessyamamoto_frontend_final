@@ -229,17 +229,17 @@ const faqGroups = [
       {
         question: "What are the Trusted Booking Fees?",
         answer:
-          "Non Member Trusted Booking Fee: 25%\nMember Trusted Booking Fee: 12.5%\n\nMembers pay half the Trusted Booking Fee compared to non members. This means more savings on every booking when you become a JetSet Cares member.\n\nThe Trusted Booking Fee pays for identity verification, ID checks, customer support, secure messaging, reviews, trust badges, and platform maintenance.",
+          "Non Member Trusted Booking Fee: 20% with a $3.50 minimum\nMember Trusted Booking Fee: 8.88% with a $1.25 minimum\n\nMembers pay a reduced Trusted Booking Fee compared to non members. This means more savings on every booking when you become a JetSet Cares member.\n\nThe Trusted Booking Fee pays for identity verification, ID checks, customer support, secure messaging, reviews, trust badges, and platform maintenance.",
       },
       {
         question: "Why become a member?",
         answer:
-          "Members pay only a 12.5% Trusted Booking Fee instead of the standard 25% non member fee. Members may also receive access to premium features, loyalty benefits, badges, or early access perks as the platform grows.",
+          "Members pay an 8.88% Trusted Booking Fee with a $1.25 minimum instead of the standard 20% non member fee with a $3.50 minimum. Members may also receive access to premium features, loyalty benefits, badges, or early access perks as the platform grows.",
       },
       {
         question: "Can I use JetSet without a membership?",
         answer:
-          "Yes. Families can book without a membership, but non members pay a 25% Trusted Booking Fee instead of the member rate of 12.5%.",
+          "Yes. Families can book without a membership, but non members pay a 20% Trusted Booking Fee with a $3.50 minimum instead of the member rate of 8.88% with a $1.25 minimum.",
       },
       {
         question: "Are refunds available?",

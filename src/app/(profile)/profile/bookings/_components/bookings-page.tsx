@@ -2,15 +2,18 @@
 
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
   AlertCircle,
+  CalendarClock,
   CalendarDays,
   Clock,
   DollarSign,
+  CheckCircle2,
+  XCircle,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -64,6 +67,7 @@ interface Booking {
   day: string;
   date: string;
   time: string;
+  endTime?: string;
   status: string;
   bookingProgress: BookingProgress;
   createdAt: string;
@@ -87,15 +91,19 @@ type FilterTab = "all" | "upcoming" | "completed" | "cancelled";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
+  confirmed: "bg-blue-100 text-blue-800",
   accepted: "bg-blue-100 text-blue-800",
   completed: "bg-green-100 text-green-800",
+  declined: "bg-slate-100 text-slate-800",
   cancelled: "bg-red-100 text-red-800",
+  refunded: "bg-purple-100 text-purple-800",
 };
 
 const BookingsPage = () => {
   const router = useRouter();
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
@@ -148,6 +156,66 @@ const BookingsPage = () => {
     enabled: !!token && !!userProfile,
   });
 
+  const bookingActionMutation = useMutation({
+    mutationFn: async ({
+      bookingId,
+      status,
+      date,
+      time,
+      endTime,
+    }: {
+      bookingId: string;
+      status?: "accepted" | "confirmed" | "completed" | "declined" | "cancelled";
+      date?: string;
+      time?: string;
+      endTime?: string;
+    }) => {
+      if (!token) throw new Error("Not authenticated");
+
+      const isParentCancel = !isPartner && status === "cancelled";
+      const actionBody =
+        status && !isParentCancel
+          ? { status }
+          : date && time
+            ? {
+                date,
+                day: new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+                  weekday: "long",
+                }),
+                time,
+                endTime,
+                endDate: date,
+              }
+            : undefined;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/booking/${bookingId}${
+          isParentCancel ? "/cancel" : ""
+        }`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: isParentCancel ? undefined : JSON.stringify(actionBody),
+        },
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update booking");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myBookings"] });
+    },
+    onError: (error: Error) => {
+      window.alert(error.message || "Failed to update booking");
+    },
+  });
+
   const allBookings = bookingsData?.data?.data || [];
   const meta = bookingsData?.data?.meta;
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1;
@@ -155,7 +223,7 @@ const BookingsPage = () => {
   const filteredBookings = allBookings.filter((booking) => {
     if (activeTab === "all") return true;
     if (activeTab === "upcoming")
-      return booking.status === "pending" || booking.status === "accepted";
+      return booking.status === "pending" || booking.status === "confirmed" || booking.status === "accepted";
     if (activeTab === "completed") return booking.status === "completed";
     if (activeTab === "cancelled") return booking.status === "cancelled";
     return true;
@@ -177,6 +245,27 @@ const BookingsPage = () => {
   };
 
   const isPartner = userProfile?.role === "find job";
+
+  const isBookingActionPending = (bookingId: string) =>
+    bookingActionMutation.isPending &&
+    bookingActionMutation.variables?.bookingId === bookingId;
+
+  const handleChangeTime = (bookingId: string) => {
+    const date = window.prompt("New date (YYYY-MM-DD)");
+    if (!date) return;
+
+    const time = window.prompt("New start time (HH:mm, 24-hour format)");
+    if (!time) return;
+
+    const endTime = window.prompt("New end time (HH:mm, 24-hour format)") || undefined;
+
+    bookingActionMutation.mutate({
+      bookingId,
+      date,
+      time,
+      endTime,
+    });
+  };
 
   const getBookingPartyName = (booking: Booking) => {
     if (isPartner && typeof booking.userId === "object" && booking.userId) {
@@ -391,7 +480,10 @@ const BookingsPage = () => {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Clock className="w-4 h-4 text-gray-400" />
-                            <span>{booking.time}</span>
+                            <span>
+                              {booking.time}
+                              {booking.endTime ? ` - ${booking.endTime}` : ""}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <DollarSign className="w-4 h-4 text-gray-400" />
@@ -420,6 +512,92 @@ const BookingsPage = () => {
                             </div>
                           </div>
                         )}
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {isPartner && booking.status === "pending" && (
+                            <button
+                              type="button"
+                              disabled={isBookingActionPending(booking._id)}
+                              onClick={() =>
+                                bookingActionMutation.mutate({
+                                  bookingId: booking._id,
+                                  status: "accepted",
+                                })
+                              }
+                              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Accept
+                            </button>
+                          )}
+
+                          {isPartner && booking.status === "pending" && (
+                            <button
+                              type="button"
+                              disabled={isBookingActionPending(booking._id)}
+                              onClick={() =>
+                                bookingActionMutation.mutate({
+                                  bookingId: booking._id,
+                                  status: "declined",
+                                })
+                              }
+                              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Decline
+                            </button>
+                          )}
+
+                          {isPartner && (booking.status === "confirmed" || booking.status === "accepted") && (
+                            <button
+                              type="button"
+                              disabled={isBookingActionPending(booking._id)}
+                              onClick={() =>
+                                bookingActionMutation.mutate({
+                                  bookingId: booking._id,
+                                  status: "completed",
+                                })
+                              }
+                              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Complete
+                            </button>
+                          )}
+
+                          {(booking.status === "pending" ||
+                            booking.status === "confirmed" ||
+                            booking.status === "accepted") && (
+                            <>
+                              {!isPartner && (
+                                <button
+                                  type="button"
+                                  disabled={isBookingActionPending(booking._id)}
+                                  onClick={() => handleChangeTime(booking._id)}
+                                  className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+                                >
+                                  <CalendarClock className="h-4 w-4" />
+                                  Change Time
+                                </button>
+                              )}
+
+                            <button
+                              type="button"
+                              disabled={isBookingActionPending(booking._id)}
+                              onClick={() =>
+                                bookingActionMutation.mutate({
+                                  bookingId: booking._id,
+                                  status: "cancelled",
+                                })
+                              }
+                              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancel
+                            </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

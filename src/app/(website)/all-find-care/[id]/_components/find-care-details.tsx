@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import About from "@/app/(website)/all-find-care/[id]/_components/about";
+import Booking from "@/app/(website)/all-find-care/[id]/_components/booking";
 import { ProfileHero } from "@/app/(website)/all-find-care/[id]/_components/profile-hero";
 import ReviewSection from "@/app/(website)/all-find-care/[id]/_components/review-section";
 import { ServiceDetails } from "@/app/(website)/all-find-care/[id]/_components/service-details";
@@ -212,6 +213,12 @@ const FindCareDetails = () => {
         days={serviceData.data.days || []}
         categoryName={categoryInfo?.name}
         categoryDescription={categoryInfo?.description}
+      />
+      <Booking
+        days={serviceData.data.days || []}
+        hourlyRate={serviceData.data.hourRate || 0}
+        providerName={`${userInfo?.firstName || ""} ${userInfo?.lastName || ""}`.trim()}
+        serviceId={serviceData.data._id}
       />
     </div>
   );
