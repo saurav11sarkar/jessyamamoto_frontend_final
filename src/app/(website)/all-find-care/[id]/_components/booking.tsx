@@ -17,11 +17,19 @@ interface ServiceDay {
   _id: string;
 }
 
+interface BlockedDate {
+  date: string;
+  reason?: string;
+}
+
 interface BookingProps {
   days: ServiceDay[];
   hourlyRate?: number;
   providerName?: string;
   serviceId?: string;
+  minAdvanceNoticeHours?: number;
+  maxBookingHorizonDays?: number;
+  blockedDates?: BlockedDate[];
 }
 
 interface BookingRequest {
@@ -86,7 +94,28 @@ interface SubscriptionPlan {
   bookingFeeMinimum?: number;
 }
 
-const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
+interface PricingPreview {
+  hourlyRate: number;
+  durationHours: number;
+  serviceSubtotal: number;
+  bookingFeePercent: number;
+  bookingFeeMinimum: number;
+  trustedBookingFee: number;
+  membershipType: string;
+  membershipPrice: number;
+  nonMemberBookingFeePercent: number;
+  nonMemberBookingFeeMinimum: number;
+  nonMemberTrustedBookingFee: number;
+}
+
+const Booking = ({
+  days = [],
+  serviceId = "",
+  hourlyRate,
+  minAdvanceNoticeHours = 0,
+  maxBookingHorizonDays = 90,
+  blockedDates = [],
+}: BookingProps) => {
   const params = useParams();
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
@@ -162,6 +191,10 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     userProfile?.subscriptionExpiry &&
     new Date(userProfile.subscriptionExpiry) > new Date();
 
+  const cheapestPaidPlan = (subscriptionPlans?.data || []).find(
+    (plan) => plan.type !== "free",
+  );
+
   const bookingServiceId = serviceId || (params?.id as string);
 
   const selectedDurationHours = React.useMemo(() => {
@@ -175,42 +208,44 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
     ((hourlyRate || 0) * selectedDurationHours).toFixed(2),
   );
 
-  // Fee preview always comes from the /subscription API (admin-editable) rather than
-  // hardcoded literals — the "free" type row is the non-member default, the member's own
-  // active plan (or the cheapest paid plan, before they've chosen one) is the member rate.
-  const freeTierPlan = (subscriptionPlans?.data || []).find(
-    (plan) => plan.type === "free",
-  );
-  const activeSubscriptionId =
-    typeof userProfile?.subscription === "object"
-      ? userProfile?.subscription?._id
-      : userProfile?.subscription;
-  const memberPlan =
-    (subscriptionPlans?.data || []).find(
-      (plan) => plan._id === activeSubscriptionId,
-    ) ||
-    (subscriptionPlans?.data || []).find((plan) => plan.type !== "free");
+  // Fee preview is computed server-side (same code path as the real Stripe checkout, including
+  // any city/category overrides an admin has set), so this can never drift from what's actually
+  // charged — the frontend just displays whatever the backend returns.
+  const { data: pricingPreview } = useQuery<{ data: PricingPreview }>({
+    queryKey: ["bookingPricingPreview", bookingServiceId, selectedDurationHours, token],
+    queryFn: async () => {
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/booking/pricing-preview?serviceId=${bookingServiceId}&durationHours=${selectedDurationHours}`,
+        { headers },
+      );
+      if (!res.ok) throw new Error("Failed to load pricing preview");
+      return res.json();
+    },
+    enabled: !!bookingServiceId,
+  });
 
-  const previewFeePercent = isMember
-    ? (memberPlan?.bookingFeePercent ?? 8.88)
-    : (freeTierPlan?.bookingFeePercent ?? 20);
-  const previewFeeMinimum = isMember
-    ? (memberPlan?.bookingFeeMinimum ?? 1.25)
-    : (freeTierPlan?.bookingFeeMinimum ?? 3.5);
-  const previewTrustedFee = Number(
-    Math.max(
-      previewServiceSubtotal * (previewFeePercent / 100),
-      previewFeeMinimum,
-    ).toFixed(2),
-  );
-  const nonMemberFeePercent = freeTierPlan?.bookingFeePercent ?? 20;
-  const nonMemberFeeMinimum = freeTierPlan?.bookingFeeMinimum ?? 3.5;
-  const nonMemberPreviewFee = Number(
-    Math.max(
-      previewServiceSubtotal * (nonMemberFeePercent / 100),
-      nonMemberFeeMinimum,
-    ).toFixed(2),
-  );
+  const previewFeePercent = pricingPreview?.data?.bookingFeePercent ?? (isMember ? 8.88 : 20);
+  const previewFeeMinimum = pricingPreview?.data?.bookingFeeMinimum ?? (isMember ? 1.25 : 3.5);
+  const previewTrustedFee =
+    pricingPreview?.data?.trustedBookingFee ??
+    Number(
+      Math.max(
+        previewServiceSubtotal * (previewFeePercent / 100),
+        previewFeeMinimum,
+      ).toFixed(2),
+    );
+  const nonMemberFeePercent = pricingPreview?.data?.nonMemberBookingFeePercent ?? 20;
+  const nonMemberFeeMinimum = pricingPreview?.data?.nonMemberBookingFeeMinimum ?? 3.5;
+  const nonMemberPreviewFee =
+    pricingPreview?.data?.nonMemberTrustedBookingFee ??
+    Number(
+      Math.max(
+        previewServiceSubtotal * (nonMemberFeePercent / 100),
+        nonMemberFeeMinimum,
+      ).toFixed(2),
+    );
   const paidPlans = (subscriptionPlans?.data || []).filter((plan) =>
     ["monthly", "quarterly", "annual", "yearly"].includes(plan.type),
   );
@@ -339,7 +374,20 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
   // Check if selected date is available
   const isDateAvailable = (date: Date): boolean => {
     const dayName = format(date, "EEEE");
-    return days.some((d) => normalizeDay(d.day) === dayName);
+    if (!days.some((d) => normalizeDay(d.day) === dayName)) return false;
+
+    const hoursUntil = (date.getTime() - Date.now()) / (1000 * 60 * 60);
+    if (minAdvanceNoticeHours > 0 && hoursUntil < minAdvanceNoticeHours) {
+      return false;
+    }
+    if (maxBookingHorizonDays > 0 && hoursUntil > maxBookingHorizonDays * 24) {
+      return false;
+    }
+
+    const dateKey = format(date, "yyyy-MM-dd");
+    if (blockedDates.some((b) => b.date === dateKey)) return false;
+
+    return true;
   };
 
   // Handle week navigation
@@ -573,8 +621,9 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
                   </p>
                   {!isMember && (
                     <p className="text-xs text-primary mt-1">
-                      Members pay {memberPlan?.bookingFeePercent ?? 8.88}% with
-                      a ${(memberPlan?.bookingFeeMinimum ?? 1.25).toFixed(2)}{" "}
+                      Members pay {cheapestPaidPlan?.bookingFeePercent ?? 8.88}
+                      % with a $
+                      {(cheapestPaidPlan?.bookingFeeMinimum ?? 1.25).toFixed(2)}{" "}
                       minimum
                     </p>
                   )}

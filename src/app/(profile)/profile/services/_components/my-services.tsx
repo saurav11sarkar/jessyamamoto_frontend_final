@@ -43,10 +43,18 @@ interface MyServiceDay {
   _id?: string;
 }
 
+interface BlockedDate {
+  date: string;
+  reason?: string;
+}
+
 interface MyService {
   _id: string;
   hourRate?: number;
   days?: MyServiceDay[];
+  minAdvanceNoticeHours?: number;
+  maxBookingHorizonDays?: number;
+  blockedDates?: BlockedDate[];
   categoryId?: { _id: string; name?: string } | string;
 }
 
@@ -195,12 +203,40 @@ const MyServices = () => {
   const [editAvailability, setEditAvailability] = useState<
     AvailabilityDayState[]
   >(buildAvailabilityState());
+  const [editMinNotice, setEditMinNotice] = useState("0");
+  const [editMaxHorizon, setEditMaxHorizon] = useState("90");
+  const [editBlockedDates, setEditBlockedDates] = useState<BlockedDate[]>([]);
+  const [newBlockedDate, setNewBlockedDate] = useState("");
+  const [newBlockedReason, setNewBlockedReason] = useState("");
   const [savingAvailability, setSavingAvailability] = useState(false);
 
   const openAvailabilityEditor = (service: MyService) => {
     setEditingService(service);
     setEditHourRate(String(service.hourRate ?? ""));
     setEditAvailability(buildAvailabilityState(service.days));
+    setEditMinNotice(String(service.minAdvanceNoticeHours ?? 0));
+    setEditMaxHorizon(String(service.maxBookingHorizonDays ?? 90));
+    setEditBlockedDates(service.blockedDates || []);
+    setNewBlockedDate("");
+    setNewBlockedReason("");
+  };
+
+  const addBlockedDate = () => {
+    if (!newBlockedDate) return;
+    if (editBlockedDates.some((d) => d.date === newBlockedDate)) {
+      toast.error("That date is already blocked");
+      return;
+    }
+    setEditBlockedDates((prev) => [
+      ...prev,
+      { date: newBlockedDate, reason: newBlockedReason || undefined },
+    ]);
+    setNewBlockedDate("");
+    setNewBlockedReason("");
+  };
+
+  const removeBlockedDate = (date: string) => {
+    setEditBlockedDates((prev) => prev.filter((d) => d.date !== date));
   };
 
   const toggleAvailabilityDay = (day: string) => {
@@ -251,6 +287,9 @@ const MyServices = () => {
               startTime: d.startTime,
               endTime: d.endTime,
             })),
+            minAdvanceNoticeHours: Number(editMinNotice) || 0,
+            maxBookingHorizonDays: Number(editMaxHorizon) || 90,
+            blockedDates: editBlockedDates,
           }),
         },
       );
@@ -776,6 +815,81 @@ const MyServices = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">
+                  Min notice (hours)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={editMinNotice}
+                  onChange={(e) => setEditMinNotice(e.target.value)}
+                  className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-gray-700">
+                  Max booking horizon (days)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={editMaxHorizon}
+                  onChange={(e) => setEditMaxHorizon(e.target.value)}
+                  className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Blocked dates
+              </label>
+              <div className="mb-2 flex gap-2">
+                <input
+                  type="date"
+                  value={newBlockedDate}
+                  onChange={(e) => setNewBlockedDate(e.target.value)}
+                  className="rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                />
+                <input
+                  type="text"
+                  placeholder="Reason (optional)"
+                  value={newBlockedReason}
+                  onChange={(e) => setNewBlockedReason(e.target.value)}
+                  className="flex-1 rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={addBlockedDate}
+                  className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+                >
+                  Add
+                </button>
+              </div>
+              {editBlockedDates.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {editBlockedDates.map((d) => (
+                    <span
+                      key={d.date}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700"
+                    >
+                      {d.date}
+                      {d.reason ? ` — ${d.reason}` : ""}
+                      <button
+                        type="button"
+                        onClick={() => removeBlockedDate(d.date)}
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex gap-3">

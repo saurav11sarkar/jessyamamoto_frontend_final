@@ -89,7 +89,12 @@ export const ServiceDetails = ({
     () =>
       [
         ...badges
-          .filter((item) => item.badge && !item.revokedAt)
+          .filter(
+            (item) =>
+              item.badge &&
+              !item.revokedAt &&
+              (!item.validThrough || new Date(item.validThrough) >= new Date()),
+          )
           .map((item) => ({
             label: item.badge?.title || "",
             icon: ShieldCheck,

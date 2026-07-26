@@ -28,6 +28,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationBell } from "./notification-bell";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -111,6 +112,7 @@ const Navbar = () => {
             ))}
 
             <div className="flex items-center gap-2 ml-2">
+              {session && <NotificationBell />}
               {session ? (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
@@ -229,6 +231,9 @@ const Navbar = () => {
 
                   {session && (
                     <>
+                      <div onClick={() => setIsOpen(false)}>
+                        <NotificationBell mobile />
+                      </div>
                       <Link
                         href="/profile"
                         onClick={() => setIsOpen(false)}

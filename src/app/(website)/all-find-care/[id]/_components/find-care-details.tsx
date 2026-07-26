@@ -236,6 +236,13 @@ const FindCareDetails = () => {
           hourlyRate={serviceData.data.hourRate || 0}
           providerName={`${userInfo?.firstName || ""} ${userInfo?.lastName || ""}`.trim()}
           serviceId={serviceData.data._id}
+          minAdvanceNoticeHours={
+            (serviceData.data as any).minAdvanceNoticeHours || 0
+          }
+          maxBookingHorizonDays={
+            (serviceData.data as any).maxBookingHorizonDays || 90
+          }
+          blockedDates={(serviceData.data as any).blockedDates || []}
         />
       </div>
     </div>

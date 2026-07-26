@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -101,6 +101,8 @@ const statusColors: Record<string, string> = {
 
 const BookingsPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightedBookingId = searchParams.get("bookingId");
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
   const queryClient = useQueryClient();
@@ -156,6 +158,20 @@ const BookingsPage = () => {
     enabled: !!token && !!userProfile,
   });
 
+  // Deep-link support: notifications link here with ?bookingId=..., scroll to and
+  // briefly highlight the matching card instead of just landing on a generic list.
+  React.useEffect(() => {
+    if (!highlightedBookingId || !bookingsData) return;
+    const el = document.getElementById(`booking-${highlightedBookingId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("ring-2", "ring-primary", "ring-offset-2");
+    const timeout = setTimeout(() => {
+      el.classList.remove("ring-2", "ring-primary", "ring-offset-2");
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [highlightedBookingId, bookingsData]);
+
   const bookingActionMutation = useMutation({
     mutationFn: async ({
       bookingId,
@@ -163,19 +179,28 @@ const BookingsPage = () => {
       date,
       time,
       endTime,
+      disputeReason,
     }: {
       bookingId: string;
-      status?: "accepted" | "confirmed" | "completed" | "declined" | "cancelled";
+      status?:
+        | "accepted"
+        | "confirmed"
+        | "completed"
+        | "declined"
+        | "cancelled"
+        | "no_show"
+        | "disputed";
       date?: string;
       time?: string;
       endTime?: string;
+      disputeReason?: string;
     }) => {
       if (!token) throw new Error("Not authenticated");
 
       const isParentCancel = !isPartner && status === "cancelled";
       const actionBody =
         status && !isParentCancel
-          ? { status }
+          ? { status, ...(disputeReason ? { disputeReason } : {}) }
           : date && time
             ? {
                 date,
@@ -428,6 +453,7 @@ const BookingsPage = () => {
                 return (
                   <div
                     key={booking._id}
+                    id={`booking-${booking._id}`}
                     className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300"
                   >
                     <div className="flex items-start gap-4">
@@ -562,6 +588,45 @@ const BookingsPage = () => {
                             >
                               <CheckCircle2 className="h-4 w-4" />
                               Complete
+                            </button>
+                          )}
+
+                          {isPartner && (booking.status === "confirmed" || booking.status === "accepted") && (
+                            <button
+                              type="button"
+                              disabled={isBookingActionPending(booking._id)}
+                              onClick={() =>
+                                bookingActionMutation.mutate({
+                                  bookingId: booking._id,
+                                  status: "no_show",
+                                })
+                              }
+                              className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700 transition hover:bg-orange-100 disabled:opacity-50"
+                            >
+                              <AlertCircle className="h-4 w-4" />
+                              No-show
+                            </button>
+                          )}
+
+                          {(booking.status === "confirmed" || booking.status === "accepted") && (
+                            <button
+                              type="button"
+                              disabled={isBookingActionPending(booking._id)}
+                              onClick={() => {
+                                const reason = window.prompt(
+                                  "Briefly describe the issue for JetSet support:",
+                                );
+                                if (!reason) return;
+                                bookingActionMutation.mutate({
+                                  bookingId: booking._id,
+                                  status: "disputed",
+                                  disputeReason: reason,
+                                });
+                              }}
+                              className="inline-flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 transition hover:bg-purple-100 disabled:opacity-50"
+                            >
+                              <AlertCircle className="h-4 w-4" />
+                              Report Issue
                             </button>
                           )}
 
