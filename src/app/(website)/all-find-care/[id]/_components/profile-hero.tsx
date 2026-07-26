@@ -1,12 +1,19 @@
 "use client";
 
-import { CheckCircle2, Star } from "lucide-react";
+import { CalendarCheck2, CheckCircle2, Star } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner"; // অথবা আপনার পছন্দের কোনো টোস্ট লাইব্রেরি
+
+interface ServiceDay {
+  day: string;
+  startTime: string;
+  endTime: string;
+  _id?: string;
+}
 
 interface ProfileHeroProps {
   userId: string;
@@ -18,7 +25,53 @@ interface ProfileHeroProps {
   reviewCount: number;
   profileImage?: string;
   isVerified?: boolean;
+  days?: ServiceDay[];
+  bookingSectionId?: string;
 }
+
+const WEEK_DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const formatTimeLabel = (time: string) => {
+  const [hourStr, minuteStr = "00"] = (time || "").split(":");
+  const hour = Number(hourStr);
+  if (Number.isNaN(hour)) return time;
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:${minuteStr.padStart(2, "0")} ${period}`;
+};
+
+const getNextAvailability = (days: ServiceDay[]) => {
+  if (!days.length) return null;
+
+  const normalizedDay = (day: string) =>
+    WEEK_DAYS.find((w) => w.toLowerCase().startsWith(day.trim().toLowerCase().slice(0, 3))) ||
+    day;
+
+  const todayIndex = new Date().getDay();
+
+  for (let offset = 0; offset < 7; offset += 1) {
+    const dayIndex = (todayIndex + offset) % 7;
+    const dayName = WEEK_DAYS[dayIndex];
+    const matches = days
+      .filter((d) => normalizedDay(d.day) === dayName)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    if (matches.length > 0) {
+      const label = offset === 0 ? "Today" : offset === 1 ? "Tomorrow" : dayName;
+      return `Available ${label} from ${formatTimeLabel(matches[0].startTime)}`;
+    }
+  }
+
+  return null;
+};
 
 export function ProfileHero({
   userId,
@@ -30,6 +83,8 @@ export function ProfileHero({
   reviewCount,
   profileImage,
   isVerified = false,
+  days = [],
+  bookingSectionId = "booking-section",
 }: ProfileHeroProps) {
   const router = useRouter();
   const session = useSession();
@@ -86,9 +141,17 @@ export function ProfileHero({
       .slice(0, 2);
   };
 
+  const nextAvailability = useMemo(() => getNextAvailability(days), [days]);
+
+  const handleRequestToBook = () => {
+    document
+      .getElementById(bookingSectionId)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="bg-[#BDE3F9] py-10">
-      <div className="container flex items-center justify-between rounded-none w-full">
+      <div className="container flex flex-col gap-8 rounded-none w-full lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-8">
           <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
             <AvatarImage
@@ -109,7 +172,7 @@ export function ProfileHero({
             <p className="font-medium text-slate-600">{location}</p>
             {!hideRate && hourlyRate > 0 && (
               <p className="text-blue-700 font-bold italic">
-                from ${hourlyRate} per hour
+                Partner rate: ${hourlyRate} per hour
               </p>
             )}
             <div className="flex items-center gap-1 pt-1">
@@ -119,16 +182,31 @@ export function ProfileHero({
                 ({reviewCount})
               </span>
             </div>
+            {nextAvailability && (
+              <div className="flex items-center gap-1.5 pt-1 text-sm font-semibold text-emerald-700">
+                <CalendarCheck2 className="h-4 w-4" />
+                <span>{nextAvailability}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <Button
-          onClick={handleJoinToConnect}
-          disabled={loading}
-          className="bg-primary hover:bg-primary text-white rounded-full font-bold shadow-lg transition-transform active:scale-95 px-8"
-        >
-          {loading ? "Connecting..." : "Join To Connect"}
-        </Button>
+        <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
+          <Button
+            onClick={handleRequestToBook}
+            className="bg-primary hover:bg-primary text-white rounded-full font-bold shadow-lg transition-transform active:scale-95 px-8"
+          >
+            Request to Book
+          </Button>
+          <Button
+            onClick={handleJoinToConnect}
+            disabled={loading}
+            variant="outline"
+            className="rounded-full font-bold border-primary text-primary hover:bg-primary/10 px-8"
+          >
+            {loading ? "Connecting..." : "Message"}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -101,7 +101,10 @@ const planPill: Record<string, string> = {
   annual: "bg-emerald-100 text-emerald-700",
 };
 
-const freeMembershipPlan: Subscription = {
+// Display-copy fallback only, used if the backend hasn't returned a "free" type
+// Subscription row yet. The actual fee/minimum always come from the API (admin-editable
+// in the dashboard membership page) — never hardcoded as the source of truth here.
+const freeMembershipPlanFallback: Subscription = {
   _id: "free",
   type: "free",
   title: "Free Membership",
@@ -109,9 +112,9 @@ const freeMembershipPlan: Subscription = {
   description:
     "Create a JetSet Cares account, explore care options, and book without paid member savings.",
   content:
-    "Free account access, Browse trusted care profiles, 20% Trusted Booking Fee with $3.50 minimum, Upgrade anytime for member savings",
-  bookingFeePercent: 20,
-  bookingFeeMinimum: 3.5,
+    "Free account access, Browse trusted care profiles, Upgrade anytime for member savings",
+  bookingFeePercent: undefined,
+  bookingFeeMinimum: undefined,
 };
 
 export default function MembershipPage() {
@@ -169,17 +172,27 @@ export default function MembershipPage() {
   });
 
   const plans = React.useMemo(() => {
+    const apiFreePlan = (data?.data || []).find((plan) => plan.type === "free");
     const paidPlans = (data?.data || []).filter((plan) => {
+      if (plan.type === "free") return false;
       const label = `${plan.type} ${plan.title}`.toLowerCase();
       return !label.includes("child");
     });
-    return [freeMembershipPlan, ...paidPlans].sort(
+    const freePlanCard: Subscription = apiFreePlan
+      ? { ...freeMembershipPlanFallback, ...apiFreePlan }
+      : freeMembershipPlanFallback;
+    return [freePlanCard, ...paidPlans].sort(
       (a, b) => (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99),
     );
   }, [data]);
 
-  const handleSubscribe = async (planId: string) => {
-    if (planId === "free") {
+  const freePlan = plans.find((plan) => plan.type === "free");
+  const cheapestPaidPlan = plans.find((plan) => plan.type !== "free");
+  const nonMemberFeePercent = freePlan?.bookingFeePercent ?? 20;
+  const memberFeePercent = cheapestPaidPlan?.bookingFeePercent ?? 8.88;
+
+  const handleSubscribe = async (planId: string, planType: string) => {
+    if (planType === "free") {
       if (!session) {
         router.push("/signup");
         return;
@@ -262,13 +275,13 @@ export default function MembershipPage() {
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                     <p className="text-sm text-slate-500">Paid member fee</p>
                     <p className="mt-2 text-3xl font-bold text-slate-900">
-                      8.88%
+                      {memberFeePercent}%
                     </p>
                   </div>
                   <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
                     <p className="text-sm text-slate-500">Non-member fee</p>
                     <p className="mt-2 text-3xl font-bold text-primary">
-                      20%
+                      {nonMemberFeePercent}%
                     </p>
                   </div>
                 </div>
@@ -467,7 +480,7 @@ export default function MembershipPage() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleSubscribe(plan._id)}
+                          onClick={() => handleSubscribe(plan._id, plan.type)}
                           disabled={loadingPlanId === plan._id}
                           className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                             isPopular
@@ -512,9 +525,11 @@ export default function MembershipPage() {
               <p className="text-slate-600">
                 Your membership is{" "}
                 <span className="font-semibold text-green-600">active</span> and
-                your reduced 8.88% booking fee is automatically applied to all
-                bookings. Expires on{" "}
-                <span className="font-semibold">{expiryDate}</span>.
+                your reduced{" "}
+                {plans.find((plan) => plan._id === activeSubscriptionId)
+                  ?.bookingFeePercent ?? memberFeePercent}
+                % booking fee is automatically applied to all bookings. Expires
+                on <span className="font-semibold">{expiryDate}</span>.
               </p>
             ) : isExpired ? (
               <p className="text-slate-600">
@@ -526,7 +541,8 @@ export default function MembershipPage() {
             ) : (
               <p className="text-slate-600">
                 You don&apos;t have an active membership yet. Become a member
-                above to enjoy reduced 8.88% booking fees instead of 20%.
+                above to enjoy reduced {memberFeePercent}% booking fees instead
+                of {nonMemberFeePercent}%.
               </p>
             )}
           </div>

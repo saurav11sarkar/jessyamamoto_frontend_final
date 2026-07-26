@@ -15,8 +15,61 @@ import {
   Trash2,
   AlertCircle,
   Loader2,
+  Clock,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const FULL_DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const TIME_OPTIONS: string[] = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2);
+  const minute = index % 2 === 0 ? "00" : "30";
+  return `${String(hour).padStart(2, "0")}:${minute}`;
+});
+
+interface MyServiceDay {
+  day: string;
+  startTime: string;
+  endTime: string;
+  _id?: string;
+}
+
+interface MyService {
+  _id: string;
+  hourRate?: number;
+  days?: MyServiceDay[];
+  categoryId?: { _id: string; name?: string } | string;
+}
+
+interface AvailabilityDayState {
+  day: string;
+  selected: boolean;
+  startTime: string;
+  endTime: string;
+}
+
+const buildAvailabilityState = (
+  days?: MyServiceDay[],
+): AvailabilityDayState[] => {
+  return FULL_DAYS.map((day) => {
+    const existing = days?.find((d) => d.day === day);
+    return {
+      day,
+      selected: !!existing,
+      startTime: existing?.startTime || "10:00",
+      endTime: existing?.endTime || "18:00",
+    };
+  });
+};
 
 interface Category {
   _id: string;
@@ -109,6 +162,115 @@ const MyServices = () => {
       userProfile.category.includes(cat._id),
     );
   }, [allCategories, userProfile]);
+
+  // Fetch the partner's own Service documents (hourRate/days) so hours & rate can be edited
+  const { data: myServices, refetch: refetchMyServices } = useQuery<
+    MyService[]
+  >({
+    queryKey: ["myServices"],
+    queryFn: async () => {
+      if (!token) throw new Error("Not authenticated");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/service/mine`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!response.ok) throw new Error("Failed to fetch your services");
+      const json = await response.json();
+      return json.data;
+    },
+    enabled: !!token,
+  });
+
+  const getServiceForCategory = (categoryId: string) =>
+    myServices?.find((s) => {
+      const catId =
+        typeof s.categoryId === "string" ? s.categoryId : s.categoryId?._id;
+      return catId === categoryId;
+    });
+
+  const [editingService, setEditingService] = useState<MyService | null>(
+    null,
+  );
+  const [editHourRate, setEditHourRate] = useState("");
+  const [editAvailability, setEditAvailability] = useState<
+    AvailabilityDayState[]
+  >(buildAvailabilityState());
+  const [savingAvailability, setSavingAvailability] = useState(false);
+
+  const openAvailabilityEditor = (service: MyService) => {
+    setEditingService(service);
+    setEditHourRate(String(service.hourRate ?? ""));
+    setEditAvailability(buildAvailabilityState(service.days));
+  };
+
+  const toggleAvailabilityDay = (day: string) => {
+    setEditAvailability((prev) =>
+      prev.map((d) => (d.day === day ? { ...d, selected: !d.selected } : d)),
+    );
+  };
+
+  const updateAvailabilityTime = (
+    day: string,
+    field: "startTime" | "endTime",
+    value: string,
+  ) => {
+    setEditAvailability((prev) =>
+      prev.map((d) => (d.day === day ? { ...d, [field]: value } : d)),
+    );
+  };
+
+  const handleSaveAvailability = async () => {
+    if (!editingService) return;
+
+    const hourRate = Number(editHourRate);
+    if (!hourRate || hourRate <= 0) {
+      toast.error("Enter a valid hourly rate");
+      return;
+    }
+
+    const selectedDays = editAvailability.filter((d) => d.selected);
+    if (selectedDays.length === 0) {
+      toast.error("Select at least one day you're available");
+      return;
+    }
+
+    setSavingAvailability(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/service/${editingService._id}/availability`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            hourRate,
+            days: selectedDays.map((d) => ({
+              day: d.day,
+              startTime: d.startTime,
+              endTime: d.endTime,
+            })),
+          }),
+        },
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.message || "Failed to update availability");
+      }
+
+      toast.success("Hours & rate updated");
+      setEditingService(null);
+      refetchMyServices();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update availability",
+      );
+    } finally {
+      setSavingAvailability(false);
+    }
+  };
 
   // Delete service mutation
   const deleteService = async (categoryId: string) => {
@@ -461,6 +623,19 @@ const MyServices = () => {
                       >
                         View Details
                       </button>
+                      {getServiceForCategory(service._id) && (
+                        <button
+                          onClick={() =>
+                            openAvailabilityEditor(
+                              getServiceForCategory(service._id)!,
+                            )
+                          }
+                          className="px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-1"
+                        >
+                          <Clock className="w-4 h-4" />
+                          Hours & Rate
+                        </button>
+                      )}
                       <button
                         onClick={() => setShowDeleteConfirm(service._id)}
                         className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1"
@@ -508,6 +683,125 @@ const MyServices = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Hours & Rate Modal */}
+      {editingService && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <h3 className="text-xl font-bold text-gray-900">
+                Edit Hours & Rate
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingService(null)}
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mb-5">
+              <label className="mb-1 block text-sm font-semibold text-gray-700">
+                Hourly rate ($)
+              </label>
+              <input
+                type="number"
+                min={1}
+                step="0.01"
+                value={editHourRate}
+                onChange={(e) => setEditHourRate(e.target.value)}
+                className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Weekly availability
+            </label>
+            <div className="space-y-2 mb-2">
+              {editAvailability.map((d) => (
+                <div
+                  key={d.day}
+                  className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={d.selected}
+                        onChange={() => toggleAvailabilityDay(d.day)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      {d.day}
+                    </label>
+                    {d.selected && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <select
+                          value={d.startTime}
+                          onChange={(e) =>
+                            updateAvailabilityTime(
+                              d.day,
+                              "startTime",
+                              e.target.value,
+                            )
+                          }
+                          className="rounded-lg border border-gray-200 px-2 py-1 text-sm focus:border-primary focus:outline-none"
+                        >
+                          {TIME_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-gray-400">to</span>
+                        <select
+                          value={d.endTime}
+                          onChange={(e) =>
+                            updateAvailabilityTime(
+                              d.day,
+                              "endTime",
+                              e.target.value,
+                            )
+                          }
+                          className="rounded-lg border border-gray-200 px-2 py-1 text-sm focus:border-primary focus:outline-none"
+                        >
+                          {TIME_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingService(null)}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAvailability}
+                disabled={savingAvailability}
+                className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
+              >
+                {savingAvailability ? (
+                  <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                ) : (
+                  "Save Changes"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

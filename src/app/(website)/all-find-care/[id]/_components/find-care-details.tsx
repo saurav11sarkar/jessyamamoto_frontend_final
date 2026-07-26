@@ -200,12 +200,13 @@ const FindCareDetails = () => {
           userInfo?.location ||
           "Location not specified"
         }
-        hourlyRate={0}
-        hideRate={true}
+        hourlyRate={serviceData.data.hourRate || 0}
         rating={parseFloat(averageRating)}
         reviewCount={reviews.length}
         profileImage={userInfo?.profileImage}
         isVerified={userInfo?.verified}
+        days={serviceData.data.days || []}
+        bookingSectionId="booking-section"
       />
       <About experience={userInfo?.exprience || 0} bio={userInfo?.bio || ""} />
       <ReviewSection
@@ -224,18 +225,19 @@ const FindCareDetails = () => {
         certifications={userInfo?.certifications || userInfo?.galary || []}
         badges={userInfo?.badges || []}
         languages={userInfo?.language || []}
-        hourlyRate={0}
-        hideRate={true}
+        hourlyRate={serviceData.data.hourRate || 0}
         days={serviceData.data.days || []}
         categoryName={categoryInfo?.name}
         categoryDescription={categoryInfo?.description}
       />
-      <Booking
-        days={serviceData.data.days || []}
-        hourlyRate={serviceData.data.hourRate || 0}
-        providerName={`${userInfo?.firstName || ""} ${userInfo?.lastName || ""}`.trim()}
-        serviceId={serviceData.data._id}
-      />
+      <div id="booking-section">
+        <Booking
+          days={serviceData.data.days || []}
+          hourlyRate={serviceData.data.hourRate || 0}
+          providerName={`${userInfo?.firstName || ""} ${userInfo?.lastName || ""}`.trim()}
+          serviceId={serviceData.data._id}
+        />
+      </div>
     </div>
   );
 };

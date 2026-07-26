@@ -174,16 +174,42 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
   const previewServiceSubtotal = Number(
     ((hourlyRate || 0) * selectedDurationHours).toFixed(2),
   );
-  const previewFeePercent = isMember ? 8.88 : 20;
-  const previewFeeMinimum = isMember ? 1.25 : 3.5;
+
+  // Fee preview always comes from the /subscription API (admin-editable) rather than
+  // hardcoded literals — the "free" type row is the non-member default, the member's own
+  // active plan (or the cheapest paid plan, before they've chosen one) is the member rate.
+  const freeTierPlan = (subscriptionPlans?.data || []).find(
+    (plan) => plan.type === "free",
+  );
+  const activeSubscriptionId =
+    typeof userProfile?.subscription === "object"
+      ? userProfile?.subscription?._id
+      : userProfile?.subscription;
+  const memberPlan =
+    (subscriptionPlans?.data || []).find(
+      (plan) => plan._id === activeSubscriptionId,
+    ) ||
+    (subscriptionPlans?.data || []).find((plan) => plan.type !== "free");
+
+  const previewFeePercent = isMember
+    ? (memberPlan?.bookingFeePercent ?? 8.88)
+    : (freeTierPlan?.bookingFeePercent ?? 20);
+  const previewFeeMinimum = isMember
+    ? (memberPlan?.bookingFeeMinimum ?? 1.25)
+    : (freeTierPlan?.bookingFeeMinimum ?? 3.5);
   const previewTrustedFee = Number(
     Math.max(
       previewServiceSubtotal * (previewFeePercent / 100),
       previewFeeMinimum,
     ).toFixed(2),
   );
+  const nonMemberFeePercent = freeTierPlan?.bookingFeePercent ?? 20;
+  const nonMemberFeeMinimum = freeTierPlan?.bookingFeeMinimum ?? 3.5;
   const nonMemberPreviewFee = Number(
-    Math.max(previewServiceSubtotal * 0.2, 3.5).toFixed(2),
+    Math.max(
+      previewServiceSubtotal * (nonMemberFeePercent / 100),
+      nonMemberFeeMinimum,
+    ).toFixed(2),
   );
   const paidPlans = (subscriptionPlans?.data || []).filter((plan) =>
     ["monthly", "quarterly", "annual", "yearly"].includes(plan.type),
@@ -546,7 +572,11 @@ const Booking = ({ days = [], serviceId = "", hourlyRate }: BookingProps) => {
                     </span>
                   </p>
                   {!isMember && (
-                    <p className="text-xs text-primary mt-1">Members pay 8.88% with a $1.25 minimum</p>
+                    <p className="text-xs text-primary mt-1">
+                      Members pay {memberPlan?.bookingFeePercent ?? 8.88}% with
+                      a ${(memberPlan?.bookingFeeMinimum ?? 1.25).toFixed(2)}{" "}
+                      minimum
+                    </p>
                   )}
                 </div>
                 <div className="border-t border-blue-100 mt-3 pt-3 text-left text-xs text-slate-600 space-y-1">
