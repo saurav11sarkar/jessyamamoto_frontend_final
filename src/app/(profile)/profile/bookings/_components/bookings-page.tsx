@@ -16,6 +16,8 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  MapPin,
 } from "lucide-react";
 import {
   Dialog,
@@ -79,8 +81,20 @@ interface Booking {
   day: string;
   date: string;
   time: string;
+  endDate?: string;
   endTime?: string;
   status: string;
+  bookingMode?: string;
+  location?: string;
+  hotelName?: string;
+  childCount?: number;
+  childAges?: string[];
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  allergies?: string;
+  medicalNotes?: string;
+  instructions?: string;
+  disputeReason?: string;
   bookingProgress: BookingProgress;
   createdAt: string;
 }
@@ -127,6 +141,8 @@ const BookingsPage = () => {
 
   const [reportIssueTarget, setReportIssueTarget] = useState<Booking | null>(null);
   const [disputeReasonInput, setDisputeReasonInput] = useState("");
+
+  const [viewTarget, setViewTarget] = useState<Booking | null>(null);
 
   const {
     data: userProfile,
@@ -574,6 +590,15 @@ const BookingsPage = () => {
                         )}
 
                         <div className="mt-5 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setViewTarget(booking)}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View Details
+                          </button>
+
                           {isPartner && booking.status === "pending" && (
                             <button
                               type="button"
@@ -840,6 +865,139 @@ const BookingsPage = () => {
               onClick={submitReportIssue}
             >
               Submit report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!viewTarget}
+        onOpenChange={(open) => !open && setViewTarget(null)}
+      >
+        <DialogContent className="rounded-2xl sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Booking details</DialogTitle>
+            <DialogDescription>
+              {viewTarget ? getBookingPartyName(viewTarget) : ""} ·{" "}
+              {viewTarget?.categoryId?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewTarget && (
+            <div className="space-y-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                    statusColors[viewTarget.status] ||
+                    "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {viewTarget.status}
+                </span>
+                <span className="text-xs text-gray-500 capitalize">
+                  {viewTarget.bookingMode || "request"} booking
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 rounded-xl bg-gray-50 p-4">
+                <div className="flex items-center gap-2 text-gray-700">
+                  <CalendarDays className="h-4 w-4 text-gray-400" />
+                  <span>
+                    {formatDate(viewTarget.date)} ({viewTarget.day})
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                  <span>
+                    {viewTarget.time}
+                    {viewTarget.endTime ? ` - ${viewTarget.endTime}` : ""}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <DollarSign className="h-4 w-4 text-gray-400" />
+                  <span>${viewTarget.serviceId?.hourRate?.toFixed(2)}/hr</span>
+                </div>
+                {viewTarget.location && (
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <span>{viewTarget.location}</span>
+                  </div>
+                )}
+              </div>
+
+              {(viewTarget.hotelName ||
+                viewTarget.childCount ||
+                (viewTarget.childAges && viewTarget.childAges.length > 0)) && (
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-gray-900">Care details</p>
+                  {viewTarget.hotelName && (
+                    <p className="text-gray-600">
+                      Hotel / stay: {viewTarget.hotelName}
+                    </p>
+                  )}
+                  {viewTarget.childCount !== undefined && (
+                    <p className="text-gray-600">
+                      Children: {viewTarget.childCount}
+                      {viewTarget.childAges && viewTarget.childAges.length > 0
+                        ? ` (ages: ${viewTarget.childAges.join(", ")})`
+                        : ""}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {(viewTarget.emergencyContactName ||
+                viewTarget.emergencyContactPhone) && (
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-gray-900">
+                    Emergency contact
+                  </p>
+                  <p className="text-gray-600">
+                    {viewTarget.emergencyContactName || "-"}
+                    {viewTarget.emergencyContactPhone
+                      ? ` · ${viewTarget.emergencyContactPhone}`
+                      : ""}
+                  </p>
+                </div>
+              )}
+
+              {viewTarget.allergies && (
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-gray-900">Allergies</p>
+                  <p className="text-gray-600">{viewTarget.allergies}</p>
+                </div>
+              )}
+
+              {viewTarget.medicalNotes && (
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-gray-900">Medical notes</p>
+                  <p className="text-gray-600">{viewTarget.medicalNotes}</p>
+                </div>
+              )}
+
+              {viewTarget.instructions && (
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-gray-900">Instructions</p>
+                  <p className="text-gray-600">{viewTarget.instructions}</p>
+                </div>
+              )}
+
+              {viewTarget.disputeReason && (
+                <div className="rounded-xl border border-purple-200 bg-purple-50 p-3">
+                  <p className="font-semibold text-purple-900">
+                    Reported issue
+                  </p>
+                  <p className="mt-1 text-purple-800">
+                    {viewTarget.disputeReason}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button type="button" onClick={() => setViewTarget(null)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
