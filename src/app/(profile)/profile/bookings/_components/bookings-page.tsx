@@ -81,10 +81,8 @@ interface BookingMeta {
 
 interface BookingResponse {
   success: boolean;
-  data: {
-    data: Booking[];
-    meta: BookingMeta;
-  };
+  data: Booking[];
+  meta: BookingMeta;
 }
 
 type FilterTab = "all" | "upcoming" | "completed" | "cancelled";
@@ -241,8 +239,8 @@ const BookingsPage = () => {
     },
   });
 
-  const allBookings = bookingsData?.data?.data || [];
-  const meta = bookingsData?.data?.meta;
+  const allBookings = bookingsData?.data || [];
+  const meta = bookingsData?.meta;
   const totalPages = meta ? Math.ceil(meta.total / meta.limit) : 1;
 
   const filteredBookings = allBookings.filter((booking) => {
