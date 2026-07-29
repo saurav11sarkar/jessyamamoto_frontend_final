@@ -17,6 +17,18 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 interface UserProfile {
   _id: string;
@@ -107,6 +119,14 @@ const BookingsPage = () => {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
+
+  const [changeTimeTarget, setChangeTimeTarget] = useState<Booking | null>(null);
+  const [changeTimeDate, setChangeTimeDate] = useState("");
+  const [changeTimeStart, setChangeTimeStart] = useState("");
+  const [changeTimeEnd, setChangeTimeEnd] = useState("");
+
+  const [reportIssueTarget, setReportIssueTarget] = useState<Booking | null>(null);
+  const [disputeReasonInput, setDisputeReasonInput] = useState("");
 
   const {
     data: userProfile,
@@ -273,21 +293,37 @@ const BookingsPage = () => {
     bookingActionMutation.isPending &&
     bookingActionMutation.variables?.bookingId === bookingId;
 
-  const handleChangeTime = (bookingId: string) => {
-    const date = window.prompt("New date (YYYY-MM-DD)");
-    if (!date) return;
+  const handleChangeTime = (booking: Booking) => {
+    setChangeTimeTarget(booking);
+    setChangeTimeDate(booking.date ? booking.date.slice(0, 10) : "");
+    setChangeTimeStart(booking.time || "");
+    setChangeTimeEnd(booking.endTime || "");
+  };
 
-    const time = window.prompt("New start time (HH:mm, 24-hour format)");
-    if (!time) return;
-
-    const endTime = window.prompt("New end time (HH:mm, 24-hour format)") || undefined;
-
+  const submitChangeTime = () => {
+    if (!changeTimeTarget || !changeTimeDate || !changeTimeStart) return;
     bookingActionMutation.mutate({
-      bookingId,
-      date,
-      time,
-      endTime,
+      bookingId: changeTimeTarget._id,
+      date: changeTimeDate,
+      time: changeTimeStart,
+      endTime: changeTimeEnd || undefined,
     });
+    setChangeTimeTarget(null);
+  };
+
+  const openReportIssue = (booking: Booking) => {
+    setReportIssueTarget(booking);
+    setDisputeReasonInput("");
+  };
+
+  const submitReportIssue = () => {
+    if (!reportIssueTarget || !disputeReasonInput.trim()) return;
+    bookingActionMutation.mutate({
+      bookingId: reportIssueTarget._id,
+      status: "disputed",
+      disputeReason: disputeReasonInput.trim(),
+    });
+    setReportIssueTarget(null);
   };
 
   const getBookingPartyName = (booking: Booking) => {
@@ -610,17 +646,7 @@ const BookingsPage = () => {
                             <button
                               type="button"
                               disabled={isBookingActionPending(booking._id)}
-                              onClick={() => {
-                                const reason = window.prompt(
-                                  "Briefly describe the issue for JetSet support:",
-                                );
-                                if (!reason) return;
-                                bookingActionMutation.mutate({
-                                  bookingId: booking._id,
-                                  status: "disputed",
-                                  disputeReason: reason,
-                                });
-                              }}
+                              onClick={() => openReportIssue(booking)}
                               className="inline-flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 transition hover:bg-purple-100 disabled:opacity-50"
                             >
                               <AlertCircle className="h-4 w-4" />
@@ -636,7 +662,7 @@ const BookingsPage = () => {
                                 <button
                                   type="button"
                                   disabled={isBookingActionPending(booking._id)}
-                                  onClick={() => handleChangeTime(booking._id)}
+                                  onClick={() => handleChangeTime(booking)}
                                   className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
                                 >
                                   <CalendarClock className="h-4 w-4" />
@@ -708,6 +734,116 @@ const BookingsPage = () => {
           </>
         )}
       </div>
+
+      <Dialog
+        open={!!changeTimeTarget}
+        onOpenChange={(open) => !open && setChangeTimeTarget(null)}
+      >
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change booking time</DialogTitle>
+            <DialogDescription>
+              Propose a new date and time for your booking with{" "}
+              {changeTimeTarget ? getBookingPartyName(changeTimeTarget) : ""}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="change-time-date">Date</Label>
+              <Input
+                id="change-time-date"
+                type="date"
+                value={changeTimeDate}
+                onChange={(e) => setChangeTimeDate(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="change-time-start">Start time</Label>
+                <Input
+                  id="change-time-start"
+                  type="time"
+                  value={changeTimeStart}
+                  onChange={(e) => setChangeTimeStart(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="change-time-end">End time</Label>
+                <Input
+                  id="change-time-end"
+                  type="time"
+                  value={changeTimeEnd}
+                  onChange={(e) => setChangeTimeEnd(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setChangeTimeTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!changeTimeDate || !changeTimeStart}
+              onClick={submitChangeTime}
+            >
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!reportIssueTarget}
+        onOpenChange={(open) => !open && setReportIssueTarget(null)}
+      >
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Report an issue</DialogTitle>
+            <DialogDescription>
+              Briefly describe the issue with your booking
+              {reportIssueTarget
+                ? ` with ${getBookingPartyName(reportIssueTarget)}`
+                : ""}
+              . JetSet support will follow up.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="dispute-reason">What went wrong?</Label>
+            <Textarea
+              id="dispute-reason"
+              value={disputeReasonInput}
+              onChange={(e) => setDisputeReasonInput(e.target.value)}
+              placeholder="Describe the issue..."
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReportIssueTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!disputeReasonInput.trim()}
+              onClick={submitReportIssue}
+            >
+              Submit report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
