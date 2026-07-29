@@ -376,6 +376,11 @@ const Booking = ({
     const dayName = format(date, "EEEE");
     if (!days.some((d) => normalizeDay(d.day) === dayName)) return false;
 
+    // Past calendar days are never bookable, regardless of minAdvanceNoticeHours.
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    if (date < startOfToday) return false;
+
     const hoursUntil = (date.getTime() - Date.now()) / (1000 * 60 * 60);
     if (minAdvanceNoticeHours > 0 && hoursUntil < minAdvanceNoticeHours) {
       return false;
