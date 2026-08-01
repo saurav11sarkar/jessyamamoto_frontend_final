@@ -170,16 +170,25 @@ const AllFindCare = () => {
       );
 
       const combined = responses.flatMap((response) => response.data || []);
-      const total = responses.reduce(
-        (sum, response) => sum + (response.meta?.total || 0),
-        0,
-      );
+
+      // When browsing "All partners" we fetch once per category and combine the
+      // results. A caregiver registered in several categories (e.g. Nanny + Infant
+      // + Pet Care) would otherwise show up as several near-identical cards and
+      // crowd out everyone else in the same city — dedupe to one card per person.
+      const seenUserIds = new Set<string>();
+      const deduped = combined.filter((caregiver) => {
+        const userId = caregiver.user?._id;
+        if (!userId) return true;
+        if (seenUserIds.has(userId)) return false;
+        seenUserIds.add(userId);
+        return true;
+      });
 
       return {
         success: true,
         message: "Service base user fetched successfully",
-        meta: { total, page: 1, limit: combined.length },
-        data: combined,
+        meta: { total: deduped.length, page: 1, limit: deduped.length },
+        data: deduped,
       };
     },
     enabled: activeCategoryIds.length > 0,
