@@ -473,7 +473,9 @@ export default function SignupExperience() {
         payload.append("profileImage", caregiverProfileImage);
       }
 
-      for (const categoryId of selectedCategoryIds) {
+      const uniqueCategoryIds = Array.from(new Set(selectedCategoryIds));
+
+      for (const categoryId of uniqueCategoryIds) {
         const categoryPayload = new FormData();
         payload.forEach((value, key) => categoryPayload.append(key, value));
         categoryPayload.append("categoryId", categoryId);
@@ -488,7 +490,15 @@ export default function SignupExperience() {
 
         const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.message || "Unable to create caregiver account");
+          // A category from an earlier, partially-completed signup attempt
+          // (same email) can already be registered. Skip it instead of
+          // aborting the whole signup so the user isn't blocked on retry.
+          const alreadyRegistered = /already have a service in this category/i.test(
+            result.message || "",
+          );
+          if (!alreadyRegistered) {
+            throw new Error(result.message || "Unable to create caregiver account");
+          }
         }
       }
 
