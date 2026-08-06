@@ -14,6 +14,7 @@ import {
   MoveRight,
   Sparkles,
   ShieldCheck,
+  Users,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -542,7 +543,7 @@ export default function SignupExperience() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#dffcf9_0%,#f7fffe_32%,#ffffff_68%)] pt-24 pb-20">
+    <div className="relative box-border min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#dffcf9_0%,#f7fffe_32%,#ffffff_68%)] pt-3 pb-4">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute left-[-8%] top-20 h-72 w-72 rounded-full bg-[#6de4d7]/20 blur-3xl" />
         <div className="absolute right-[-6%] top-32 h-80 w-80 rounded-full bg-[#9cc7ff]/20 blur-3xl" />
@@ -550,25 +551,38 @@ export default function SignupExperience() {
 
       <div className="container relative max-w-6xl px-4">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#cbeeea] bg-white/90 px-5 py-2 text-sm font-semibold text-[#149d90] shadow-sm">
+          <Image
+            src="/jetset-logo.webp"
+            alt="JetSet Cares"
+            width={230}
+            height={142}
+            priority
+            className="mx-auto h-16 w-auto object-contain md:h-20"
+          />
+          <span className="mt-1 inline-flex items-center gap-2 rounded-full border border-[#cbeeea] bg-white/90 px-4 py-1.5 text-sm font-semibold text-[#149d90] shadow-sm">
             <Sparkles className="h-4 w-4" />
             JetSet Cares Signup
           </span>
-          <h1 className="mt-6 text-4xl font-semibold leading-tight text-[#16324f] sm:text-5xl">
+          <h1 className="mt-2 text-3xl font-semibold leading-tight text-[#16324f] sm:text-4xl">
             Create Your Account
           </h1>
         </div>
 
-        <div className="mx-auto mt-12 max-w-5xl rounded-[2.25rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(239,248,247,0.92))] p-6 shadow-[0_30px_90px_rgba(22,50,79,0.12)] backdrop-blur md:p-8">
+        <div className="mx-auto mt-3 max-w-6xl rounded-[1.5rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(242,250,249,0.96))] p-4 shadow-[0_24px_70px_rgba(22,50,79,0.11)] backdrop-blur md:p-5">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-[#0A0A23] md:text-2xl lg:text-3xl">
+              <h2 className="text-3xl font-extrabold leading-tight text-[#0A0A23] md:text-[2.15rem]">
                 {rootStep === 1
-                  ? "Let's get started. Choose an option:"
+                  ? "Let's get started."
                   : selectedRole === "find care"
                     ? "Parent Details"
                     : caregiverHeading}
               </h2>
+              {rootStep === 1 && (
+                <p className="text-2xl font-extrabold leading-tight text-[#129d9a] md:text-[2.15rem]">
+                  Choose an option:
+                </p>
+              )}
               {(rootStep === 1 || caregiverSubheading) && (
                 <p className="mt-2 text-sm text-[#3B3B4F] md:text-base">
                   {rootStep === 1
@@ -589,31 +603,51 @@ export default function SignupExperience() {
           </div>
 
           {rootStep === 1 && (
-            <div className="mt-10 grid gap-5 md:grid-cols-2">
+            <div className="mt-4 grid gap-5 md:grid-cols-2">
               <div className="flex-1 relative">
                 <button
                   type="button"
-                  onClick={() => handleRoleSelect("find care")}
-                  className="group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
+                  onClick={() => handleRoleSelect("find job")}
+                  className="group relative flex h-full min-h-[360px] w-full flex-col overflow-hidden rounded-[1.25rem] border border-[#91e8e1] bg-white text-left shadow-[0_16px_42px_rgba(20,157,144,0.12)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_22px_58px_rgba(20,157,144,0.18)]"
                 >
-                  <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e9fbf8] md:h-20 md:w-20">
+                  <div className="relative h-36 w-full overflow-hidden bg-[#fff3e6] md:h-40">
                     <Image
-                      src="/icon1.png"
-                      alt="Parent account"
-                      width={80}
-                      height={80}
-                      className="h-10 w-10 object-contain md:h-12 md:w-12"
+                      src="/partner-role-card.png"
+                      alt="Professional childcare partner"
+                      fill
+                      sizes="(min-width: 768px) 460px, 100vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={{ objectPosition: "center 30%" }}
                     />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-[#0A0A23] md:text-xl">
-                    Find Trusted Care
-                  </h3>
-                  <p className="mb-6 text-sm leading-6 text-[#3B3B4F]">
-                    Create an account to browse trusted care and book when you&apos;re ready.
-                  </p>
-                  <div className="flex items-center justify-between rounded-full bg-[#3ee0cf] px-4 py-3 text-sm font-bold text-slate-950 md:text-base">
-                    <span>Continue as Parent</span>
-                    <MoveRight className="h-5 w-5" />
+                  <div className="relative flex flex-1 flex-col px-5 pb-4 pt-7">
+                    <div className="absolute left-1/2 top-0 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[5px] border-white bg-white text-[#36d9cc] shadow-[0_10px_30px_rgba(20,157,144,0.20)]">
+                      <Users className="h-7 w-7" />
+                    </div>
+                    <p className="mb-1 text-center text-sm font-medium text-[#6b7280]">
+                      I want to
+                    </p>
+                    <h3 className="mx-auto mb-2 max-w-xs text-center text-xl font-extrabold leading-snug text-[#21cfc1] md:text-[1.35rem]">
+                      Apply to Become a Premium Partner
+                    </h3>
+                    <div className="mb-2 h-px w-full bg-slate-200" />
+                    <p className="mx-auto mb-2 max-w-sm text-center text-sm leading-5 text-[#4B5563] md:text-base md:leading-6">
+                      Offer your care services to trusted families and grow your business with JetSet.
+                    </p>
+                    <div className="mt-auto flex items-center justify-between rounded-full bg-[#ff781f] px-5 py-2 text-base font-extrabold text-white shadow-[inset_-48px_0_0_rgba(255,255,255,0.16)]">
+                      <span>Apply Now</span>
+                      <MoveRight className="h-5 w-5" />
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-3 text-[10px] font-extrabold leading-tight text-[#27c7bc]">
+                      <span className="flex min-h-9 items-center gap-2 rounded-xl bg-[#effdfa] px-3 py-1.5">
+                        <ShieldCheck className="h-4 w-4 shrink-0 fill-[#44d9cf]/15" />
+                        Verified & Background-Checked
+                      </span>
+                      <span className="flex min-h-9 items-center gap-2 rounded-xl bg-[#effdfa] px-3 py-1.5">
+                        <Sparkles className="h-4 w-4 shrink-0" />
+                        More Bookings More Opportunities
+                      </span>
+                    </div>
                   </div>
                 </button>
               </div>
@@ -621,30 +655,62 @@ export default function SignupExperience() {
               <div className="flex-1 relative">
                 <button
                   type="button"
-                  onClick={() => handleRoleSelect("find job")}
-                  className="group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
+                  onClick={() => handleRoleSelect("find care")}
+                  className="group relative flex h-full min-h-[360px] w-full flex-col overflow-hidden rounded-[1.25rem] border border-[#91e8e1] bg-white text-left shadow-[0_16px_42px_rgba(20,157,144,0.12)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_22px_58px_rgba(20,157,144,0.18)]"
                 >
-                  <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e9fbf8] md:h-20 md:w-20">
+                  <div className="relative h-36 w-full overflow-hidden bg-[#e9fbf8] md:h-40">
                     <Image
-                      src="/icon2.png"
-                      alt="Find Trusted Care account"
-                      width={80}
-                      height={80}
-                      className="h-10 w-10 object-contain md:h-12 md:w-12"
+                      src="/parent-role-card.png"
+                      alt="Trusted caregiver with children"
+                      fill
+                      sizes="(min-width: 768px) 460px, 100vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={{ objectPosition: "center 28%" }}
                     />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-[#0A0A23] md:text-xl">
-                    Join as a Partner
-                  </h3>
-                  <p className="mb-6 text-sm leading-6 text-[#3B3B4F]">
-                    Select your service category and complete the full provider signup here.
-                  </p>
-                  <div className="flex items-center justify-between rounded-full bg-[#3ee0cf] px-4 py-3 text-sm font-bold text-slate-950 md:text-base">
-                    <span>Continue as Partner</span>
-                    <MoveRight className="h-5 w-5" />
+                  <div className="relative flex flex-1 flex-col px-5 pb-4 pt-7">
+                    <div className="absolute left-1/2 top-0 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[5px] border-white bg-white text-[#36d9cc] shadow-[0_10px_30px_rgba(20,157,144,0.20)]">
+                      <Users className="h-7 w-7" />
+                    </div>
+                    <p className="mb-1 text-center text-sm font-medium text-[#6b7280]">
+                      I want to
+                    </p>
+                    <h3 className="mx-auto mb-2 max-w-xs text-center text-xl font-extrabold leading-snug text-[#21cfc1] md:text-[1.35rem]">
+                      Find Trusted Care
+                    </h3>
+                    <div className="mb-2 h-px w-full bg-slate-200" />
+                    <p className="mx-auto mb-2 max-w-sm text-center text-sm leading-5 text-[#4B5563] md:text-base md:leading-6">
+                      Discover verified caregivers and safe, loving care for your little ones.
+                    </p>
+                    <div className="mt-auto flex items-center justify-between rounded-full bg-[#3bd9cc] px-5 py-2 text-base font-extrabold text-white shadow-[inset_-48px_0_0_rgba(255,255,255,0.16)]">
+                      <span>Find Trusted Care</span>
+                      <MoveRight className="h-5 w-5" />
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-3 text-[10px] font-extrabold leading-tight text-[#27c7bc]">
+                      <span className="flex min-h-9 items-center gap-2 rounded-xl bg-[#effdfa] px-3 py-1.5">
+                        <ShieldCheck className="h-4 w-4 shrink-0 fill-[#44d9cf]/15" />
+                        Trusted & Background-Checked
+                      </span>
+                      <span className="flex min-h-9 items-center gap-2 rounded-xl bg-[#effdfa] px-3 py-1.5">
+                        <Sparkles className="h-4 w-4 shrink-0" />
+                        Safe, Reliable, Peace of Mind.
+                      </span>
+                    </div>
                   </div>
                 </button>
               </div>
+            </div>
+          )}
+
+          {rootStep === 1 && (
+            <div className="mt-2 flex items-center justify-center gap-3 rounded-2xl bg-[#f2fffd] px-4 py-2 text-center text-sm text-[#4B5563]">
+              <ShieldCheck className="h-6 w-6 shrink-0 fill-[#44d9cf]/15 text-[#3ee0cf]" />
+              <p>
+                <span className="font-extrabold text-[#0A0A23]">
+                  Your family&apos;s safety is our top priority.
+                </span>{" "}
+                All partners are background-checked and verified.
+              </p>
             </div>
           )}
 
