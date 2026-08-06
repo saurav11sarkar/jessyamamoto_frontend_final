@@ -1,12 +1,22 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Lock,
+  MessageCircle,
+  ShieldCheck,
+  Tag,
+} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 
@@ -26,7 +36,9 @@ interface BookingProps {
   days: ServiceDay[];
   hourlyRate?: number;
   providerName?: string;
+  providerUserId?: string;
   serviceId?: string;
+  serviceName?: string;
   minAdvanceNoticeHours?: number;
   maxBookingHorizonDays?: number;
   blockedDates?: BlockedDate[];
@@ -111,12 +123,15 @@ interface PricingPreview {
 const Booking = ({
   days = [],
   serviceId = "",
+  serviceName = "Care Service",
   hourlyRate,
+  providerUserId = "",
   minAdvanceNoticeHours = 0,
   maxBookingHorizonDays = 90,
   blockedDates = [],
 }: BookingProps) => {
   const params = useParams();
+  const router = useRouter();
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -197,6 +212,37 @@ const Booking = ({
 
   const bookingServiceId = serviceId || (params?.id as string);
 
+  const handleMessagePartner = async () => {
+    if (!token) {
+      setError("Please login first to message this partner.");
+      return;
+    }
+    if (!providerUserId) {
+      setError("Unable to find this partner for messaging.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/conversation/${providerUserId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result?.message || "Failed to start conversation");
+      }
+      router.push(`/profile/messages/${result.data._id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to message partner");
+    }
+  };
+
   const selectedDurationHours = React.useMemo(() => {
     if (!selectedTime || !selectedEndTime) return 1;
     const startIndex = availableTimeSlots.indexOf(selectedTime);
@@ -226,8 +272,8 @@ const Booking = ({
     enabled: !!bookingServiceId,
   });
 
-  const previewFeePercent = pricingPreview?.data?.bookingFeePercent ?? (isMember ? 8.88 : 20);
-  const previewFeeMinimum = pricingPreview?.data?.bookingFeeMinimum ?? (isMember ? 1.25 : 3.5);
+  const previewFeePercent = pricingPreview?.data?.bookingFeePercent ?? (isMember ? 12.5 : 25);
+  const previewFeeMinimum = pricingPreview?.data?.bookingFeeMinimum ?? (isMember ? 3 : 5);
   const previewTrustedFee =
     pricingPreview?.data?.trustedBookingFee ??
     Number(
@@ -236,8 +282,8 @@ const Booking = ({
         previewFeeMinimum,
       ).toFixed(2),
     );
-  const nonMemberFeePercent = pricingPreview?.data?.nonMemberBookingFeePercent ?? 20;
-  const nonMemberFeeMinimum = pricingPreview?.data?.nonMemberBookingFeeMinimum ?? 3.5;
+  const nonMemberFeePercent = pricingPreview?.data?.nonMemberBookingFeePercent ?? 25;
+  const nonMemberFeeMinimum = pricingPreview?.data?.nonMemberBookingFeeMinimum ?? 5;
   const nonMemberPreviewFee =
     pricingPreview?.data?.nonMemberTrustedBookingFee ??
     Number(
@@ -247,8 +293,34 @@ const Booking = ({
       ).toFixed(2),
     );
   const paidPlans = (subscriptionPlans?.data || []).filter((plan) =>
-    ["monthly", "quarterly", "annual", "yearly"].includes(plan.type),
+    ["monthly", "6month", "quarterly", "annual", "yearly"].includes(plan.type),
   );
+
+  const selectedDateLabel = date
+    ? format(date, "EEEE, MMMM d, yyyy")
+    : "Select a date";
+  const selectedWindowLabel =
+    selectedTime && selectedEndTime
+      ? `${selectedTime} - ${selectedEndTime} (${selectedDurationHours} hour${
+          selectedDurationHours === 1 ? "" : "s"
+        })`
+      : "Select a start and end time";
+  const nonMemberSavings = Math.max(nonMemberPreviewFee - previewTrustedFee, 0);
+
+  const getPlanPeriod = (type: string) => {
+    if (type === "monthly") return "/month";
+    if (type === "6month" || type === "quarterly") return "/6 months";
+    if (type === "annual" || type === "yearly") return "/year";
+    return "";
+  };
+
+  const getPlanCta = (type: string) => {
+    if (type === "monthly") return "Choose Monthly";
+    if (type === "6month" || type === "quarterly") return "Choose 6 Months";
+    if (type === "annual" || type === "yearly") return "Choose Annual";
+    return "Choose Plan";
+  };
+
 
   const bookingMutation = useMutation({
     mutationFn: async (bookingData: BookingRequest) => {
@@ -395,6 +467,18 @@ const Booking = ({
     return true;
   };
 
+  const requestDisabledReason = !date
+    ? "Select a date and time slot to continue."
+    : !isDateAvailable(date)
+      ? "This date is not available."
+      : !selectedTime || !selectedEndTime
+        ? "Select a start and end time slot to continue."
+        : !hotelName.trim() || !bookingLocation.trim()
+          ? "Add hotel/stay name and service address before checkout."
+          : !emergencyContactName.trim() || !emergencyContactPhone.trim()
+            ? "Add emergency contact details before checkout."
+            : "";
+
   // Handle week navigation
   const goToPreviousWeek = () => {
     setCurrentWeekOffset((prev) => prev - 1);
@@ -504,7 +588,7 @@ const Booking = ({
   }
 
   return (
-    <div className="p-8 bg-gray-50 border border-gray-200 container rounded-xl">
+    <div className="p-4 sm:p-8 bg-gray-50 border border-gray-200 container rounded-xl">
       <h2 className="text-2xl font-bold mb-6 text-[#001f3f]">
         Select Available Time slot
       </h2>
@@ -514,6 +598,96 @@ const Booking = ({
           {error}
         </div>
       )}
+
+      <div className="mb-6 space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+              1
+            </span>
+            <h3 className="text-lg font-bold text-slate-900">
+              Your Booking Details
+            </h3>
+          </div>
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+              <Tag className="h-4 w-4 text-slate-500" />
+              <span className="text-slate-500">Service</span>
+              <span className="ml-auto font-semibold text-slate-900">
+                {serviceName}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+              <CalendarDays className="h-4 w-4 text-slate-500" />
+              <span className="text-slate-500">Date & Time</span>
+              <span className="ml-auto text-right font-semibold text-slate-900">
+                {selectedDateLabel}
+                <br />
+                {selectedWindowLabel}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+              <Info className="h-4 w-4 text-slate-500" />
+              <span className="text-slate-500">Partner Rate</span>
+              <span className="ml-auto font-semibold text-slate-900">
+                ${hourlyRate || 0} per hour
+              </span>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+              <Info className="h-4 w-4 text-slate-500" />
+              <span className="text-slate-500">Service Total</span>
+              <span className="ml-auto font-semibold text-slate-900">
+                ${previewServiceSubtotal.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+              2
+            </span>
+            <h3 className="text-lg font-bold text-slate-900">
+              Payment Summary
+            </h3>
+          </div>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span>Service Total</span>
+              <span className="font-semibold">${previewServiceSubtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>
+                {isMember ? "Member" : "Non-Member"} Trusted Platform Fee (
+                {previewFeePercent}%)
+              </span>
+              <span className="font-semibold">${previewTrustedFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between rounded-xl bg-teal-50 px-4 py-3 font-bold text-teal-700">
+              <span>Pay Online Today (Trusted Platform Fee)</span>
+              <span>${previewTrustedFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Pay Partner at Time of Service</span>
+              <span className="font-semibold">${previewServiceSubtotal.toFixed(2)}</span>
+            </div>
+            <p className="text-xs leading-5 text-slate-500">
+              The partner&apos;s service fee is paid directly to the partner in
+              local currency at the time of service.
+            </p>
+            <div className="flex items-start gap-2 rounded-2xl bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700">
+              <Tag className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <span>
+                JetSet members pay 12.5% instead of 25%
+                {nonMemberSavings > 0
+                  ? ` and save $${nonMemberSavings.toFixed(2)} on this booking.`
+                  : "."}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
         <CardContent className="p-4 sm:p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -626,9 +800,9 @@ const Booking = ({
                   </p>
                   {!isMember && (
                     <p className="text-xs text-primary mt-1">
-                      Members pay {cheapestPaidPlan?.bookingFeePercent ?? 8.88}
+                      Members pay {cheapestPaidPlan?.bookingFeePercent ?? 12.5}
                       % with a $
-                      {(cheapestPaidPlan?.bookingFeeMinimum ?? 1.25).toFixed(2)}{" "}
+                      {(cheapestPaidPlan?.bookingFeeMinimum ?? 3).toFixed(2)}{" "}
                       minimum
                     </p>
                   )}
@@ -733,16 +907,9 @@ const Booking = ({
             <Button
               className="text-white px-16 py-7 rounded-full text-lg font-medium transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
-                !date ||
-                !isDateAvailable(date) ||
-                !selectedTime ||
-                !selectedEndTime ||
-                !hotelName.trim() ||
-                !bookingLocation.trim() ||
-                !emergencyContactName.trim() ||
-                !emergencyContactPhone.trim() ||
-                bookingMutation.isPending
+                !!requestDisabledReason || bookingMutation.isPending
               }
+              title={requestDisabledReason || "Pay trusted platform fee and send request"}
               onClick={handleBookNow}
             >
               {bookingMutation.isPending ? (
@@ -752,9 +919,28 @@ const Booking = ({
                 </div>
               ) : (
                 bookingMode === "request"
-                  ? "Authorize Fee & Request"
+                  ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Lock className="h-5 w-5" />
+                      Pay Trusted Platform Fee & Send Request
+                    </span>
+                  )
                   : "Pay Booking Fee & Confirm"
               )}
+            </Button>
+            {requestDisabledReason && (
+              <p className="max-w-xs text-center text-xs text-slate-500">
+                {requestDisabledReason}
+              </p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full max-w-xs rounded-full border-slate-200 bg-white"
+              onClick={handleMessagePartner}
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Message Partner
             </Button>
           </div>
         </CardContent>
@@ -763,18 +949,22 @@ const Booking = ({
       {!isMember && paidPlans.length > 0 && (
         <div className="mt-6 rounded-2xl border border-blue-100 bg-white p-5">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">
+            <div className="mb-1 flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                3
+              </span>
+              <h3 className="text-lg font-semibold text-slate-900">
               Membership savings for this booking
-            </h3>
+              </h3>
+            </div>
             <p className="text-sm text-slate-500">
-              Compare before checkout. The booking fee shown at checkout is the
-              source of truth.
+              Members reduce their Trusted Platform Fee from 25% to 12.5%.
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             {paidPlans.map((plan) => {
-              const memberPercent = plan.bookingFeePercent ?? 8.88;
-              const memberMinimum = plan.bookingFeeMinimum ?? 1.25;
+              const memberPercent = plan.bookingFeePercent ?? 12.5;
+              const memberMinimum = plan.bookingFeeMinimum ?? 3;
               const memberFee = Number(
                 Math.max(
                   previewServiceSubtotal * (memberPercent / 100),
@@ -791,7 +981,7 @@ const Booking = ({
                 >
                   <p className="font-semibold text-slate-900">{plan.title}</p>
                   <p className="mt-1 text-sm text-slate-500">
-                    ${plan.price} membership
+                    ${plan.price} {getPlanPeriod(plan.type)}
                   </p>
                   <p className="mt-3 text-sm font-semibold text-primary">
                     Save ${savings.toFixed(2)} on this booking
@@ -805,6 +995,12 @@ const Booking = ({
                       {breakEven === 1 ? "" : "s"}.
                     </p>
                   )}
+                  <button
+                    type="button"
+                    className="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    {getPlanCta(plan.type)}
+                  </button>
                 </div>
               );
             })}
@@ -826,12 +1022,19 @@ const Booking = ({
       <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
         <p className="text-sm font-medium text-amber-800">How payment works</p>
         <ul className="mt-2 text-sm text-amber-700 space-y-1 list-disc list-inside">
-          <li>You pay only the Trusted Booking Fee online. Request bookings confirm after partner acceptance.</li>
+          <li>You pay only the Trusted Platform Fee online. Request bookings confirm after partner acceptance.</li>
           <li>The caregiver&apos;s service fee is paid directly to them at the time of service.</li>
           <li>Pay directly to the partner in local currency at the time of service.</li>
           <li>More than a booking: the fee supports verification, platform safety, and support; it is not a charitable donation.</li>
           <li>Your booking includes identity verification, secure messaging, reviews, and platform support.</li>
         </ul>
+      </div>
+      <div className="mt-4 flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-500">
+        <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-500" />
+        <span>
+          Secure payment. Your booking request is sent after payment
+          authorization. Booking is confirmed when the partner accepts.
+        </span>
       </div>
     </div>
   );

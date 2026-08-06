@@ -233,8 +233,10 @@ const FindCareDetails = () => {
       <div id="booking-section">
         <Booking
           days={serviceData.data.days || []}
+          serviceName={categoryInfo?.name || "Care Service"}
           hourlyRate={serviceData.data.hourRate || 0}
           providerName={`${userInfo?.firstName || ""} ${userInfo?.lastName || ""}`.trim()}
+          providerUserId={userInfo?._id}
           serviceId={serviceData.data._id}
           minAdvanceNoticeHours={
             (serviceData.data as any).minAdvanceNoticeHours || 0

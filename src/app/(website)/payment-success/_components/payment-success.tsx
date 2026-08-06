@@ -30,10 +30,10 @@ const PaymentSuccess = () => {
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6">
             <div className="flex items-center justify-center gap-2 text-primary font-semibold">
               <Crown className="w-5 h-5" />
-              <span>Member Trusted Booking Fee: 8.88%</span>
+              <span>Member Trusted Booking Fee: 12.5%</span>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              You save compared to the non-member fee of 20%
+              You save compared to the non-member fee of 25%
             </p>
           </div>
 
@@ -81,7 +81,7 @@ const PaymentSuccess = () => {
             <span>You are now a JetSet Member</span>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            Trusted Booking Fee reduced from 20% to 8.88% on every booking
+            Trusted Booking Fee reduced from 25% to 12.5% on every booking
           </p>
         </div>
 

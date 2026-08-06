@@ -61,7 +61,7 @@ const typeLabel: Record<string, string> = {
   weekly: "Weekly",
   monthly: "Monthly",
   "6month": "6 Month",
-  quarterly: "Quarterly",
+  quarterly: "6 Month",
   yearly: "Annual",
   annual: "Annual",
 };
@@ -71,7 +71,7 @@ const typePeriod: Record<string, string> = {
   weekly: "/week",
   monthly: "/month",
   "6month": "/6 months",
-  quarterly: "/quarter",
+  quarterly: "/6 months",
   yearly: "/year",
   annual: "/year",
 };
@@ -188,8 +188,8 @@ export default function MembershipPage() {
 
   const freePlan = plans.find((plan) => plan.type === "free");
   const cheapestPaidPlan = plans.find((plan) => plan.type !== "free");
-  const nonMemberFeePercent = freePlan?.bookingFeePercent ?? 20;
-  const memberFeePercent = cheapestPaidPlan?.bookingFeePercent ?? 8.88;
+  const nonMemberFeePercent = freePlan?.bookingFeePercent ?? 25;
+  const memberFeePercent = cheapestPaidPlan?.bookingFeePercent ?? 12.5;
 
   const handleSubscribe = async (planId: string, planType: string) => {
     if (planType === "free") {
@@ -305,7 +305,7 @@ export default function MembershipPage() {
                 <div className="mt-8 space-y-4">
                   {[
                     "Reduced Trusted Booking Fees on every eligible booking",
-                    "Clear choices from free to monthly, 6 month, and annual",
+                    "Clear choices from free to monthly, 6-month, and annual",
                     "A more polished member experience from search to checkout",
                   ].map((item) => (
                     <div
@@ -446,8 +446,8 @@ export default function MembershipPage() {
                         {plan.description}
                       </p>
                       <p className="mt-3 rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">
-                        Booking fee: {plan.bookingFeePercent ?? (isFreePlan ? 20 : 8.88)}%
-                        {" "}minimum ${plan.bookingFeeMinimum ?? (isFreePlan ? 3.5 : 1.25)}
+                        Booking fee: {plan.bookingFeePercent ?? (isFreePlan ? 25 : 12.5)}%
+                        {" "}minimum ${plan.bookingFeeMinimum ?? (isFreePlan ? 5 : 3)}
                       </p>
                     </div>
 

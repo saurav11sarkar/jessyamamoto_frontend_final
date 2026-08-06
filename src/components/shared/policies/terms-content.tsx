@@ -105,7 +105,7 @@ const termsSections = [
     title: "12. Memberships and Subscriptions",
     paragraphs: [
       "JetSet Cares may offer paid memberships or subscriptions that provide benefits such as reduced Trusted Booking Fees, premium features, access to certain booking tools, discounts, loyalty rewards, or other benefits.",
-      "Memberships may be offered monthly, quarterly, annually, or under other plans. Unless otherwise stated at purchase, memberships may automatically renew until canceled.",
+      "Memberships may be offered monthly, 6-month, annually, or under other plans. Unless otherwise stated at purchase, memberships may automatically renew until canceled.",
       "Users are responsible for canceling memberships before the renewal date if they do not want to continue. Membership fees are generally non refundable unless required by law or expressly stated by JetSet Cares.",
       "If a membership is purchased through Apple App Store or Google Play, cancellation and refund requests may need to be handled through Apple or Google according to their policies.",
       "JetSet Cares may modify, pause, remove, or replace membership benefits at any time, but will not intentionally remove core paid benefits from an active billing period without a reasonable replacement, credit, notice, or legally required remedy.",
