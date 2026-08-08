@@ -18,6 +18,8 @@ interface NotificationItem {
   title: string;
   message: string;
   bookingId?: string;
+  conversationId?: string;
+  messageId?: string;
   read: boolean;
   createdAt: string;
 }
@@ -100,7 +102,9 @@ export function NotificationBell({ mobile = false }: { mobile?: boolean }) {
     } catch {
       // non-blocking — still navigate even if marking read fails
     }
-    if (item.bookingId) {
+    if (item.conversationId) {
+      router.push(`/profile/messages/${item.conversationId}`);
+    } else if (item.bookingId) {
       router.push(`/profile/bookings?bookingId=${item.bookingId}`);
     }
   };
@@ -110,7 +114,7 @@ export function NotificationBell({ mobile = false }: { mobile?: boolean }) {
   if (mobile) {
     return (
       <button
-        onClick={() => router.push("/profile/bookings")}
+        onClick={() => router.push("/profile/messages")}
         className="relative flex items-center gap-2 rounded-lg px-3 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50"
       >
         <Bell className="h-5 w-5" />
