@@ -32,6 +32,12 @@ const getProfileHref = (user: any) => {
 const getDisplayName = (user: any) =>
   `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "User";
 
+const isGifUrl = (value: string) =>
+  /^https?:\/\/.+\.gif(\?.*)?$/i.test(value.trim());
+
+const isImageUrl = (value: string) =>
+  /^https?:\/\/.+\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(value.trim());
+
 const getOtherUser = (chat: any, myId?: string) =>
   chat?.participants?.find((p: any) => p?._id && getId(p) !== String(myId));
 
@@ -263,6 +269,11 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
       conversationId: selectedChat._id,
       receiverId: receiverId,
       message: inputValue.trim(),
+      messageType: isGifUrl(inputValue.trim())
+        ? "gif"
+        : isImageUrl(inputValue.trim())
+          ? "image"
+          : "text",
     };
 
     setIsSending(true);
@@ -469,7 +480,15 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
                           : "bg-white border text-gray-800 rounded-bl-none"
                       }`}
                     >
-                      {msg.message}
+                      {msg.messageType === "gif" || msg.messageType === "image" || isImageUrl(msg.message || "") ? (
+                        <img
+                          src={msg.message}
+                          alt={msg.messageType === "gif" ? "GIF message" : "Image message"}
+                          className="max-h-64 rounded-xl object-contain"
+                        />
+                      ) : (
+                        msg.message
+                      )}
                     </div>
                   </div>
                 );
@@ -486,6 +505,7 @@ export default function MessagingPage({ initialConversationId }: MessagingPagePr
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Write Here"
+                  title="You can paste a GIF or image URL here"
                   className="border-none focus-visible:ring-0 shadow-none text-sm bg-transparent"
                   disabled={isSending}
                 />
