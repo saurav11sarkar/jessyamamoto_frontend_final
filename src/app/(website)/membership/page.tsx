@@ -178,10 +178,20 @@ export default function MembershipPage() {
       const label = `${plan.type} ${plan.title}`.toLowerCase();
       return !label.includes("child");
     });
+    // Deduplicate by frequency to guarantee one card per billing period
+    const uniquePaidPlans: Subscription[] = [];
+    const seenTypes = new Set<string>();
+    for (const plan of paidPlans) {
+      const groupKey = plan.type === "yearly" ? "annual" : plan.type;
+      if (!seenTypes.has(groupKey)) {
+        seenTypes.add(groupKey);
+        uniquePaidPlans.push(plan);
+      }
+    }
     const freePlanCard: Subscription = apiFreePlan
       ? { ...freeMembershipPlanFallback, ...apiFreePlan }
       : freeMembershipPlanFallback;
-    return [freePlanCard, ...paidPlans].sort(
+    return [freePlanCard, ...uniquePaidPlans].sort(
       (a, b) => (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99),
     );
   }, [data]);
@@ -388,7 +398,7 @@ export default function MembershipPage() {
               No membership plans available at the moment.
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-8 pt-6 md:grid-cols-2 xl:grid-cols-4">
               {plans.map((plan) => {
                 const isPopular = plan.type === "quarterly" || plan.type === "6month";
                 const isFreePlan = plan.type === "free";
@@ -404,12 +414,12 @@ export default function MembershipPage() {
                 return (
                   <div
                     key={plan._id}
-                    className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(15,23,42,0.12)] ${planAccent[plan.type] || planAccent.monthly}`}
+                    className={`group relative flex h-full flex-col rounded-3xl border p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(15,23,42,0.12)] ${planAccent[plan.type] || planAccent.monthly}`}
                   >
                     <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent opacity-70" />
 
                     {isPopular && (
-                      <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary px-4 py-1 text-xs font-semibold text-white shadow-lg">
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap rounded-full bg-primary px-4 py-1 text-xs font-semibold text-white shadow-md">
                         Most Popular
                       </div>
                     )}
