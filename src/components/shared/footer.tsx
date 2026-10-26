@@ -33,6 +33,7 @@ const Footer = () => {
     { name: "Terms of Service", href: "/terms-and-conditions" },
     { name: "Privacy Policy", href: "/privacy-policy" },
     { name: "FAQ", href: "/faq" },
+    { name: "How to delete account", href: "/delete-account" },
   ];
 
   const socialIcons = [
